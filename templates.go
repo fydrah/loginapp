@@ -18,7 +18,7 @@ var indexTmpl = template.Must(template.New("index.html").Parse(`<html>
       <h2>{{ .AppName }}</h2>
       <ul>
         <li>
-          <label for="cross_client">Authentification for clients :</label>
+          <label for="cross_client">Authentication for clients :</label>
           <input type="text" name="cross_client"{{ if .DisableChoices }}readonly="readonly"{{ end }} />
           <span>A comma separated list</span>
         </li>
