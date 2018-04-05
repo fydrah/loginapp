@@ -18,17 +18,17 @@ var indexTmpl = template.Must(template.New("index.html").Parse(`<html>
       <h2>{{ .AppName }}</h2>
       <ul>
         <li>
-          <label for="cross_client">Authentication for clients :</label>
+          <label for="cross_client">Cross client access:</label>
           <input type="text" name="cross_client"{{ if .DisableChoices }}readonly="readonly"{{ end }} />
           <span>A comma separated list</span>
         </li>
         <li>
-          <label for="extra_scopes">Extra scopes :</label>
+          <label for="extra_scopes">Extra scopes:</label>
           <input type="text" name="extra_scopes" value="{{ .Scopes }}"{{ if .DisableChoices }}readonly="readonly"{{ end }}>
           <span>A comma separated list</span>
         </li>
         <li>
-          <label for="offline_access">Offline Access :</label>
+          <label for="offline_access">Offline Access:</label>
           <input type="checkbox" name="offline_access" value="yes" checked>
         </li>
         <li>

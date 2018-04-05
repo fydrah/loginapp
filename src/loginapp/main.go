@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/coreos/go-oidc"
 	"github.com/spf13/cobra"
@@ -103,13 +102,11 @@ func cmd() *cobra.Command {
 		a          app
 	)
 	c := cobra.Command{
-		Use:   "login-app",
-		Short: "Kubernetes login OIDC app",
+		Use:   "loginapp <config file>",
+		Short: "Simple login application for Kubernetes & Dex",
 		Long:  "",
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return errors.New("Missing configuration file path")
-			}
 			configData, err := ioutil.ReadFile(args[0])
 			if err != nil {
 				return fmt.Errorf("failed to read config file %s: %v", args[0], err)
@@ -224,14 +221,6 @@ func (a *app) oauth2Config(scopes []string) *oauth2.Config {
 	}
 }
 
-//func (a *app) handleLogin(w http.ResponseWriter, r *http.Request) {
-//	var scopes []string
-//	authCodeURL := ""
-//	scopes = append(scopes, "openid", "profile", "email", "groups")
-//	authCodeURL = a.oauth2Config(scopes).AuthCodeURL(appState, oauth2.AccessTypeOffline)
-//	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
-//}
-
 func (a *app) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var scopes []string
 	if a.InitExtraScopes != "" {
@@ -332,3 +321,4 @@ func (a *app) handleCallback(w http.ResponseWriter, r *http.Request) {
 
 	renderToken(w, a.RedirectURI, rawIDToken, token.RefreshToken, buff.Bytes(), a.ClientSecret)
 }
+

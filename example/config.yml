@@ -1,0 +1,10 @@
+debug: false
+client_id: "login"
+client_secret: 4TORGiNV9M54BTk1v7dNuFSaI6hUjfjr
+issuer_url: "https://dex.example.local/dex"
+#issuer_root_ca: "/certs/ca.pem"
+redirect_url: "https://login.example.local/callback"
+listen: "http://0.0.0.0:8080"
+disable_choices: false
+extra_scopes: "groups"
+app_name: "Kubernetes Auth"
