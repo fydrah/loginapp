@@ -1,17 +1,21 @@
 # Loginapp
 
+[![Docker Repository on Quay](https://quay.io/repository/fydrah/loginapp/status "Docker Repository on Quay")](https://quay.io/repository/fydrah/loginapp)
+
 **Simple login application for Kubernetes & Dex**
 
-Original source code from https://github.com/coreos/dex/tree/master/cmd/example-app
+Original source code from [coreos/dex repository](https://github.com/coreos/dex/tree/master/cmd/example-app)
 
-## Docker tags
+## Dockerfiles
 
-* From scratch tags: **latest**, **VERSION** ([scratch/Dockerfile](./dockerfiles/scratch/Dockerfile))
-* Alpine 3.6 tags: **alpine**, **VERSION-alpine** ([alpine/Dockerfile](./dockerfiles/alpine/Dockerfile))
+* From scratch: ([scratch/Dockerfile](./dockerfiles/scratch/Dockerfile))
+* Alpine 3.6: ([alpine/Dockerfile](./dockerfiles/alpine/Dockerfile))
+
+The default image available [here](https://quay.io/fydrah/loginapp) is built from scratch.
 
 ## Usage
 
-```
+```shell
 Usage:
   loginapp <config file> [flags]
 
@@ -21,9 +25,10 @@ Flags:
 
 * Test:
 
-```
+```shell
 # Update example/config.yml
-docker run --rm -v $(pwd)/example/:/config/ fhardy/loginapp /config/config.yml
+# Test on local
+docker run --rm -v $(pwd)/example/:/config/ quay.io/fydrah/loginapp:<tag> /config/config.yml
 ```
 
 * Kubernetes:
