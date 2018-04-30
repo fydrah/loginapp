@@ -16,25 +16,49 @@ The default image available [here](https://quay.io/fydrah/loginapp) is built fro
 ## Usage
 
 ```shell
-Usage:
   loginapp <config file> [flags]
-
-Flags:
-  -h, --help   help for loginapp
 ```
 
-* Test:
+* Helm:
 
-```shell
-# Update example/config.yml
-# Test on local
-docker run --rm -v $(pwd)/example/:/config/ quay.io/fydrah/loginapp:<tag> /config/config.yml
-```
+[Helm chart](https://github.com/ObjectifLibre/k8s-ldap/tree/master/charts/k8s-ldap) is available on ObjectifLibre/k8s-ldap repository.
 
 * Kubernetes:
 
 A full example is available on [ObjectifLibre/k8s-ldap repository](https://github.com/ObjectifLibre/k8s-ldap)
 
-* Helm:
+## Dev
 
-[Helm chart](https://github.com/ObjectifLibre/k8s-ldap/tree/master/charts/k8s-ldap) is also available on ObjectifLibre/k8s-ldap repository.
+* Setup Dex
+
+```
+  # Configure github oauth secrets if needed.
+  # You must create an app in your github account before.
+  cat <<EOF > dev.env
+GITHUB_CLIENT_ID=yourclientid
+GITHUB_CLIENT_SECRET=yoursecretid
+EOF
+  # Configure hosts entry
+  echo "127.0.0.1 dex.example.com" | sudo tee -a /etc/hosts
+  docker-compose up -d
+```
+
+User: admin@example.com
+Password: password
+
+* Manage dependencies
+
+We use [golang dep](https://golang.github.io/dep/docs/installation.html).
+
+```
+  dep ensure
+```
+
+* Compile, configure and run
+
+Configuration files are located in [example directory](./example/)
+
+```
+  make build
+  bin/loginapp example/config-loginapp.yaml
+```

@@ -1,16 +1,16 @@
 FROM golang:1.8-alpine3.6 AS build
+ARG REPO=github.com/fydrah/loginapp
 
 RUN apk add --no-cache git build-base
-ADD . /build/
-WORKDIR /build
-RUN go get -d ./...
-RUN make
-
+ADD . /go/src/${REPO}
+WORKDIR /go/src/${REPO}
+RUN make build-static
 
 FROM scratch
-MAINTAINER Flavien Hardy <flav.hardy@gmail.com>
+ARG REPO=github.com/fydrah/loginapp
+LABEL maintainer="Flavien Hardy <flav.hardy@gmail.com>"
 
-COPY --from=build /build/loginapp /
+COPY --from=build /go/src/${REPO}/bin/loginapp /
 
 ENTRYPOINT ["/loginapp"]
 CMD [""]

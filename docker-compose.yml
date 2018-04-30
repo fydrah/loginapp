@@ -1,0 +1,19 @@
+version: '2'
+volumes:
+  dex:
+services:
+  dex:
+    image: quay.io/coreos/dex:v2.10.0
+    volumes:
+    - ./example/ssl:/ssl
+    - ./example/config-dex.yaml:/config.yaml
+    - dex:/var/dex/
+    env_file:
+    - dev.env
+    command:
+    - serve
+    - /config.yaml
+    ports:
+    - 5556:5556
+    extra_hosts:
+    - "dex.example.com:127.0.0.1"
