@@ -3,312 +3,145 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/go-oidc"
-	"github.com/spf13/cobra"
+	"github.com/julienschmidt/httprouter"
 	"golang.org/x/oauth2"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
-	"time"
 )
 
-const appState = "Dex login request"
-
-type app struct {
-	ClientID        string `yaml:"client_id"`
-	ClientSecret    string `yaml:"client_secret"`
-	RedirectURI     string `yaml:"redirect_url"`
-	InitExtraScopes string `yaml:"extra_scopes"`
-	DisableChoices  bool   `yaml:"disable_choices"`
-	AppName         string `yaml:"app_name"`
-	IssuerURL       string `yaml:"issuer_url"`
-	RootCAs         string `yaml:"issuer_root_ca"`
-	Listen          string `yaml:"listen"`
-	TlsCert         string `yaml:"tls_cert"`
-	TlsKey          string `yaml:"tls_key"`
-	Debug           bool   `yaml:"debug"`
-
-	verifier *oidc.IDTokenVerifier
-	provider *oidc.Provider
-
-	// Does the provider use "offline_access" scope to request a refresh token
-	// or does it use "access_type=offline" (e.g. Google)?
-	offlineAsScope bool
-
-	client *http.Client
+/**
+ * Type def
+ */
+type Server struct {
+	client		*http.Client
+	config		AppConfig
+	provider	*oidc.Provider
+	router		*httprouter.Router
+	verifier	*oidc.IDTokenVerifier
+	context		context.Context
 }
 
-// return an HTTP client which trusts the provided root CAs.
-func httpClientForRootCAs(rootCAs string) (*http.Client, error) {
-	tlsConfig := tls.Config{RootCAs: x509.NewCertPool()}
-	rootCABytes, err := ioutil.ReadFile(rootCAs)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read root-ca: %v", err)
-	}
-	if !tlsConfig.RootCAs.AppendCertsFromPEM(rootCABytes) {
-		return nil, fmt.Errorf("no certs found in root CA file %q", rootCAs)
-	}
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tlsConfig,
-			Proxy:           http.ProxyFromEnvironment,
-			Dial: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-		},
-	}, nil
+/**
+ * Render
+ */
+func (s *Server) renderIndex(w http.ResponseWriter) {
+	renderTemplate(w, indexTmpl, s.config)
 }
 
-type debugTransport struct {
-	t http.RoundTripper
-}
-
-func (d debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	reqDump, err := httputil.DumpRequest(req, true)
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("%s", reqDump)
-
-	resp, err := d.t.RoundTrip(req)
-	if err != nil {
-		return nil, err
-	}
-
-	respDump, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		resp.Body.Close()
-		return nil, err
-	}
-	log.Printf("%s", respDump)
-	return resp, nil
-}
-
-func cmd() *cobra.Command {
-	var (
-		a          app
-	)
-	c := cobra.Command{
-		Use:   "loginapp <config file>",
-		Short: "Simple login application for Kubernetes & Dex",
-		Long:  "",
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			configData, err := ioutil.ReadFile(args[0])
-			if err != nil {
-				return fmt.Errorf("failed to read config file %s: %v", args[0], err)
-			}
-			if err := yaml.Unmarshal(configData, &a); err != nil {
-				return fmt.Errorf("error parse config file %s: %v", args[0], err)
-			}
-			u, err := url.Parse(a.RedirectURI)
-			if err != nil {
-				return fmt.Errorf("parse redirect-uri: %v", err)
-			}
-			listenURL, err := url.Parse(a.Listen)
-			if err != nil {
-				return fmt.Errorf("parse listen address: %v", err)
-			}
-
-			if a.RootCAs != "" {
-				client, err := httpClientForRootCAs(a.RootCAs)
-				if err != nil {
-					return err
-				}
-				a.client = client
-			}
-
-			if a.Debug {
-				if a.client == nil {
-					a.client = &http.Client{
-						Transport: debugTransport{http.DefaultTransport},
-					}
-				} else {
-					a.client.Transport = debugTransport{a.client.Transport}
-				}
-			}
-
-			if a.client == nil {
-				a.client = http.DefaultClient
-			}
-			// TODO(ericchiang): Retry with backoff
-			ctx := oidc.ClientContext(context.Background(), a.client)
-			provider, err := oidc.NewProvider(ctx, a.IssuerURL)
-			if err != nil {
-				return fmt.Errorf("Failed to query provider %q: %v", a.IssuerURL, err)
-			}
-
-			var s struct {
-				// What scopes does a provider support?
-				//
-				// See: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
-				ScopesSupported []string `json:"scopes_supported"`
-			}
-			if err := provider.Claims(&s); err != nil {
-				return fmt.Errorf("Failed to parse provider scopes_supported: %v", err)
-			}
-
-			if len(s.ScopesSupported) == 0 {
-				// scopes_supported is a "RECOMMENDED" discovery claim, not a required
-				// one. If missing, assume that the provider follows the spec and has
-				// an "offline_access" scope.
-				a.offlineAsScope = true
-			} else {
-				// See if scopes_supported has the "offline_access" scope.
-				a.offlineAsScope = func() bool {
-					for _, scope := range s.ScopesSupported {
-						if scope == oidc.ScopeOfflineAccess {
-							return true
-						}
-					}
-					return false
-				}()
-			}
-
-			a.provider = provider
-			a.verifier = provider.Verifier(&oidc.Config{ClientID: a.ClientID})
-
-			http.HandleFunc("/", a.handleIndex)
-			http.HandleFunc("/login", a.handleLogin)
-			http.HandleFunc(u.Path, a.handleCallback)
-
-			switch listenURL.Scheme {
-			case "http":
-				log.Printf("listening on %s", a.Listen)
-				return http.ListenAndServe(listenURL.Host, nil)
-			case "https":
-				log.Printf("listening on %s", a.Listen)
-				return http.ListenAndServeTLS(listenURL.Host, a.TlsCert, a.TlsKey, nil)
-			default:
-				return fmt.Errorf("listen address %q is not using http or https", a.Listen)
-			}
-		},
-	}
-	return &c
-}
-
-func main() {
-	if err := cmd().Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(2)
-	}
-}
-
-func (a *app) handleIndex(w http.ResponseWriter, r *http.Request) {
-	renderIndex(w, a.InitExtraScopes, a.DisableChoices, a.AppName)
-}
-
-func (a *app) oauth2Config(scopes []string) *oauth2.Config {
+/**
+ * OpenID
+ */
+func (s *Server) OAuth2Config(scopes []string, endpoint string) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     a.ClientID,
-		ClientSecret: a.ClientSecret,
-		Endpoint:     a.provider.Endpoint(),
+		ClientID:     s.config.ClientID,
+		ClientSecret: s.config.ClientSecret,
+		RedirectURL:  s.config.RedirectURL+"/"+endpoint,
+		Endpoint:     s.provider.Endpoint(),
 		Scopes:       scopes,
-		RedirectURL:  a.RedirectURI,
 	}
 }
 
-func (a *app) handleLogin(w http.ResponseWriter, r *http.Request) {
-	var scopes []string
-	if a.InitExtraScopes != "" {
-		for _, scope := range strings.Split(a.InitExtraScopes, ",") {
+func (s *Server) PrepareCallbackUrl(endpoint string) string {
+	// Prepare scopes
+	var (
+		scopes []string
+		authCodeURL string
+	)
+	if s.config.ExtraScopes != "" {
+		for _, scope := range strings.Split(s.config.ExtraScopes, ",") {
 			scopes = append(scopes, scope)
 		}
 	}
-	if extraScopes := r.FormValue("extra_scopes"); extraScopes != "" {
-		for _, scope := range strings.Split(extraScopes, ",") {
-			scopes = append(scopes, scope)
-		}
-	}
+	// Prepare cross client auth
+	// see https://github.com/coreos/dex/blob/master/Documentation/custom-scopes-claims-clients.md
 	var clients []string
-	if crossClients := r.FormValue("cross_client"); crossClients != "" {
-		clients = strings.Split(crossClients, ",")
+	if s.config.CrossClients != "" {
+		clients = strings.Split(s.config.CrossClients, ",")
 	}
 	for _, client := range clients {
 		scopes = append(scopes, "audience:server:client_id:"+client)
 	}
 
-	authCodeURL := ""
 	scopes = append(scopes, "openid", "profile", "email", "groups")
-	if r.FormValue("offline_access") != "yes" {
-		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(appState)
-	} else if a.offlineAsScope {
+	if s.config.OfflineAsScope {
 		scopes = append(scopes, "offline_access")
-		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(appState)
+		authCodeURL = s.OAuth2Config(scopes, endpoint).AuthCodeURL(s.config.AppName)
+	} else if !s.config.OfflineAsScope {
+		authCodeURL = s.OAuth2Config(scopes, endpoint).AuthCodeURL(s.config.AppName)
 	} else {
-		authCodeURL = a.oauth2Config(scopes).AuthCodeURL(appState, oauth2.AccessTypeOffline)
+		authCodeURL = s.OAuth2Config(scopes, endpoint).AuthCodeURL(s.config.AppName, oauth2.AccessTypeOffline)
 	}
-	log.Printf("%s",a.oauth2Config)
-	http.Redirect(w, r, authCodeURL, http.StatusSeeOther)
+	return authCodeURL
 }
 
-func (a *app) handleCallback(w http.ResponseWriter, r *http.Request) {
+/**
+ * Handlers
+ */
+func (s *Server) HandleGetIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	s.renderIndex(w)
+}
+
+func (s *Server) HandlePostLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	switch r.FormValue("access") {
+	case "Dashboard":
+		http.Redirect(w, r, s.PrepareCallbackUrl("dashboard"), http.StatusSeeOther)
+		// Set Cookie
+		// Then redirect to Dashboard Proxy
+		// Set Header with Token: Bearer XXXXXXXX
+	case "CLI":
+		http.Redirect(w, r, s.PrepareCallbackUrl("cli"), http.StatusSeeOther)
+	}
+}
+
+func (s *Server) HandlePostCLI(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+}
+
+func (s *Server) HandlePostDashboard(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+}
+
+func (s *Server) HandleGetCallbackDashboard(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+}
+
+func (s *Server) HandleGetCallbackCLI(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var (
 		err   error
 		token *oauth2.Token
 	)
-
-	ctx := oidc.ClientContext(r.Context(), a.client)
-	oauth2Config := a.oauth2Config(nil)
-	switch r.Method {
-	case "GET":
-		// Authorization redirect callback from OAuth2 auth flow.
-		if errMsg := r.FormValue("error"); errMsg != "" {
-			http.Error(w, errMsg+": "+r.FormValue("error_description"), http.StatusBadRequest)
-			return
-		}
-		code := r.FormValue("code")
-		if code == "" {
-			http.Error(w, fmt.Sprintf("no code in request: %q", r.Form), http.StatusBadRequest)
-			return
-		}
-		if state := r.FormValue("state"); state != appState {
-			http.Error(w, fmt.Sprintf("expected state %q got %q", appState, state), http.StatusBadRequest)
-			return
-		}
-		token, err = oauth2Config.Exchange(ctx, code)
-	case "POST":
-		// Form request from frontend to refresh a token.
-		refresh := r.FormValue("refresh_token")
-		if refresh == "" {
-			http.Error(w, fmt.Sprintf("no refresh_token in request: %q", r.Form), http.StatusBadRequest)
-			return
-		}
-		t := &oauth2.Token{
-			RefreshToken: refresh,
-			Expiry:       time.Now().Add(-time.Hour),
-		}
-		token, err = oauth2Config.TokenSource(ctx, t).Token()
-	default:
-		http.Error(w, fmt.Sprintf("method not implemented: %s", r.Method), http.StatusBadRequest)
+	oauth2Config := s.OAuth2Config(nil, "cli")
+	// Authorization redirect callback from OAuth2 auth flow.
+	if errMsg := r.FormValue("error"); errMsg != "" {
+		http.Error(w, errMsg+": "+r.FormValue("error_description"), http.StatusBadRequest)
 		return
 	}
-
+	code := r.FormValue("code")
+	if code == "" {
+		http.Error(w, fmt.Sprintf("no code in request: %q", r.Form), http.StatusBadRequest)
+		return
+	}
+	if state := r.FormValue("state"); state != s.config.AppName {
+		http.Error(w, fmt.Sprintf("expected state %q got %q", s.config.AppName, state), http.StatusBadRequest)
+		return
+	}
+	token, err = oauth2Config.Exchange(s.context, code)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to get token: %v", err), http.StatusInternalServerError)
 		return
 	}
-
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
 		http.Error(w, "no id_token in token response", http.StatusInternalServerError)
 		return
 	}
-
-	idToken, err := a.verifier.Verify(r.Context(), rawIDToken)
+	idToken, err := s.verifier.Verify(r.Context(), rawIDToken)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to verify ID token: %v", err), http.StatusInternalServerError)
 		return
@@ -318,7 +151,98 @@ func (a *app) handleCallback(w http.ResponseWriter, r *http.Request) {
 
 	buff := new(bytes.Buffer)
 	json.Indent(buff, []byte(claims), "", "  ")
-
-	renderToken(w, a.RedirectURI, rawIDToken, token.RefreshToken, buff.Bytes(), a.ClientSecret)
+	//renderToken(w, a.RedirectURI, rawIDToken, token.RefreshToken, buff.Bytes(), a.ClientSecret)
 }
 
+/**
+ * Run
+ */
+func (s *Server) Run() error {
+	// router setup
+	s.router = httprouter.New()
+	s.Routes()
+	// client setup
+	if s.client == nil {
+		client, err := httpClientForRootCAs(s.config.IssuerRootCA)
+		if err != nil {
+			return err
+		}
+		s.client = client
+	}
+	// OIDC setup
+	// TODO(ericchiang): Retry with backoff
+	s.context = oidc.ClientContext(context.Background(), s.client)
+	provider, err := oidc.NewProvider(s.context, s.config.IssuerURL)
+	if err != nil {
+		return fmt.Errorf("Failed to query provider %q: %v", s.config.IssuerURL, err)
+	}
+	var ss struct {
+		// What scopes does a provider support?
+		//
+		// See: https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
+		ScopesSupported []string `json:"scopes_supported"`
+	}
+	if err := provider.Claims(&ss); err != nil {
+		return fmt.Errorf("Failed to parse provider scopes_supported: %v", err)
+	}
+
+	if len(ss.ScopesSupported) == 0 {
+		// scopes_supported is a "RECOMMENDED" discovery claim, not a required
+		// one. If missing, assume that the provider follows the spec and has
+		// an "offline_access" scope.
+		s.config.OfflineAsScope = true
+	} else {
+		// See if scopes_supported has the "offline_access" scope.
+		s.config.OfflineAsScope = func() bool {
+			for _, scope := range ss.ScopesSupported {
+				if scope == oidc.ScopeOfflineAccess {
+					return true
+				}
+			}
+			return false
+		}()
+	}
+
+	s.provider = provider
+	s.verifier = provider.Verifier(&oidc.Config{ClientID: s.config.ClientID})
+	// Proxy setup
+
+	// Run
+	if s.config.TlsEnabled {
+		fmt.Printf("listening on https://%s\n", s.config.Listen)
+		if err := fmt.Errorf("%v", http.ListenAndServeTLS(s.config.Listen, s.config.TlsCert, s.config.TlsKey, s.router)); err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf("listening on http://%s\n", s.config.Listen)
+		if err := fmt.Errorf("%v", http.ListenAndServe(s.config.Listen, s.router)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Server) RunProxy() error {
+	du, err := url.Parse(s.config.DashboardUrl)
+	if err != nil {
+		return err
+	}
+	rp := httputil.NewSingleHostReverseProxy(du)
+	if err := fmt.Errorf("%v", http.ListenAndServe(":8080", rp)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func main() {
+	s := &Server{}
+	if err := s.config.Init(os.Args); err != nil {
+		log.Fatal(err)
+	}
+	if s.config.DashboardProxyEnabled {
+		go func(){
+			log.Fatal(s.RunProxy())
+		}()
+	}
+	log.Fatal(s.Run())
+}

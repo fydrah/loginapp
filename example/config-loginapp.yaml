@@ -1,0 +1,17 @@
+app_name: "Kubernetes Auth"
+client_id: "loginapp"
+client_secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+dashboard_proxy_enabled: true
+debug: true
+dashboard_enabled: true
+dashboard_url: "https://kubernetes-dashboard:8443"
+disable_choices: false
+extra_scopes: "groups"
+issuer_root_ca: "example/ssl/ca.pem"
+issuer_url: "https://dex.example.com:5556"
+listen: "0.0.0.0:5555"
+offline_as_scope: true
+redirect_url: "https://127.0.0.1:5555/callback"
+tls_enabled: true
+tls_cert: example/ssl/cert.pem
+tls_key: example/ssl/key.pem
