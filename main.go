@@ -21,22 +21,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
 	"github.com/julienschmidt/httprouter"
+	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 	"golang.org/x/oauth2"
 	"net/http"
 	"os"
-	"github.com/urfave/cli"
-	"github.com/sirupsen/logrus"
-	"time"
 	"strings"
-	"github.com/cenkalti/backoff"
+	"time"
 )
 
 var (
 	GitVersion = "X.X.X"
-	GitHash = "XXXXXXX"
-	logger = logrus.New()
+	GitHash    = "XXXXXXX"
+	logger     = logrus.New()
 )
 
 /**
@@ -79,9 +79,7 @@ func (s *Server) PrepareCallbackUrl(endpoint string) string {
 		authCodeURL string
 	)
 
-	for _, extra_scope := range s.config.OIDC.ExtraScopes {
-		scopes = append(scopes, extra_scope)
-	}
+	scopes = append(scopes, s.config.OIDC.ExtraScopes...)
 	// Prepare cross client auth
 	// see https://github.com/coreos/dex/blob/master/Documentation/custom-scopes-claims-clients.md
 	for _, cross_client := range s.config.OIDC.CrossClients {
@@ -190,7 +188,9 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request, c strin
 		return KubeUserInfo{}, fmt.Errorf("Failed to unmarshal claims from idToken: %v", err)
 	}
 	buff := new(bytes.Buffer)
-	json.Indent(buff, []byte(claims), "", "  ")
+	if err := json.Indent(buff, []byte(claims), "", "  "); err != nil {
+		return KubeUserInfo{}, fmt.Errorf("Failed to format claims output: %v", err)
+	}
 	if err := json.Unmarshal(claims, &json_claims); err != nil {
 		panic(err)
 	}
@@ -213,13 +213,13 @@ func loggingHandler(next http.Handler) http.Handler {
 		t1 := time.Now()
 		next.ServeHTTP(w, r)
 		t2 := time.Now()
-	logger.WithFields(logrus.Fields{
-		"method": r.Method,
-		"path": r.URL.String(),
-		"request_duration": fmt.Sprintf("%s",t2.Sub(t1)),
-		"protocol": r.Proto,
-		"remote_address": r.RemoteAddr,
-	}).Info()
+		logger.WithFields(logrus.Fields{
+			"method":           r.Method,
+			"path":             r.URL.String(),
+			"request_duration": t2.Sub(t1).String(),
+			"protocol":         r.Proto,
+			"remote_address":   r.RemoteAddr,
+		}).Info()
 	}
 	return http.HandlerFunc(fn)
 }
@@ -229,8 +229,8 @@ func loggingHandler(next http.Handler) http.Handler {
  */
 func (s *Server) Run() error {
 	var (
-		provider	*oidc.Provider
-		backoffErr	error
+		provider   *oidc.Provider
+		backoffErr error
 	)
 	// router setup
 	s.router = httprouter.New()
@@ -323,23 +323,25 @@ GLOBAL OPTIONS:
 	app.UsageText = "Simple application for Kubernetes CLI configuration with OIDC"
 	app.Version = fmt.Sprintf("%v build %v", GitVersion, GitHash)
 	app.Authors = []cli.Author{
-		cli.Author{
+		{
 			Name:  "fydrah",
 			Email: "flav.hardy@gmail.com",
 		},
 	}
 	app.Commands = []cli.Command{
 		{
-			Name: "serve",
-			Usage: "Run loginapp application",
+			Name:            "serve",
+			Usage:           "Run loginapp application",
 			SkipFlagParsing: true,
-			ArgsUsage: "[configuration file]",
+			ArgsUsage:       "[configuration file]",
 			Before: func(c *cli.Context) error {
 				return nil
 			},
 			Action: func(c *cli.Context) error {
 				if len(c.Args()) == 0 {
-					cli.ShowCommandHelp(c, c.Command.Name)
+					if err := cli.ShowCommandHelp(c, c.Command.Name); err != nil {
+						return fmt.Errorf("Error while rendering command help: %v", err)
+					}
 					return fmt.Errorf("Missing argument")
 				}
 				s := &Server{}

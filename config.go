@@ -17,10 +17,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"strings"
-	"github.com/sirupsen/logrus"
 )
 
 type AppConfig struct {
@@ -41,13 +41,13 @@ type AppConfig struct {
 		CrossClients   []string `yaml:"cross_clients"`
 	} `yaml:"oidc"`
 	Tls struct {
-		Enabled	bool	`yaml:"enabled"`
-		Cert	string	`yaml:"cert"`
-		Key	string	`yaml:"key"`
+		Enabled bool   `yaml:"enabled"`
+		Cert    string `yaml:"cert"`
+		Key     string `yaml:"key"`
 	} `yaml:"tls"`
 	Log struct {
-		Level	string	`yaml:"level"`
-		Format	string	`yaml:"format"`
+		Level  string `yaml:"level"`
+		Format string `yaml:"format"`
 	} `yaml:"log"`
 }
 
@@ -60,27 +60,27 @@ func (a *AppConfig) Init(config string) error {
 		return fmt.Errorf("error parse config file %s: %v", config, err)
 	}
 	switch f := strings.ToLower(a.Log.Format); f {
-		case "json":
-			logger.Formatter = &logrus.JSONFormatter{}
-		case "text":
-			logger.Formatter = &logrus.TextFormatter{}
-		default:
-			logger.Formatter = &logrus.JSONFormatter{}
-			logger.Warningf("Format %q not available, use json|text. Using json format", f)
+	case "json":
+		logger.Formatter = &logrus.JSONFormatter{}
+	case "text":
+		logger.Formatter = &logrus.TextFormatter{}
+	default:
+		logger.Formatter = &logrus.JSONFormatter{}
+		logger.Warningf("Format %q not available, use json|text. Using json format", f)
 	}
 	logger.Debugf("Using %s log format", a.Log.Format)
 	switch f := strings.ToLower(a.Log.Level); f {
-		case "debug":
-			logger.Level = logrus.DebugLevel
-		case "info":
-			logger.Level = logrus.InfoLevel
-		case "warning":
-			logger.Level = logrus.WarnLevel
-		case "error":
-			logger.Level = logrus.ErrorLevel
-		default:
-			logger.Level = logrus.InfoLevel
-			logger.Warningf("Log level %q not available, use debug|info|warning|error. Using Info log level", f)
+	case "debug":
+		logger.Level = logrus.DebugLevel
+	case "info":
+		logger.Level = logrus.InfoLevel
+	case "warning":
+		logger.Level = logrus.WarnLevel
+	case "error":
+		logger.Level = logrus.ErrorLevel
+	default:
+		logger.Level = logrus.InfoLevel
+		logger.Warningf("Log level %q not available, use debug|info|warning|error. Using Info log level", f)
 	}
 	logger.Debugf("Using %s log level", a.Log.Format)
 	logger.Debugf("Configuration loaded: %+v", a)
