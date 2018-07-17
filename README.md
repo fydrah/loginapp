@@ -2,7 +2,7 @@
 
 [![Docker Repository on Quay](https://quay.io/repository/fydrah/loginapp/status "Docker Repository on Quay")](https://quay.io/repository/fydrah/loginapp)
 
-**Simple login CLI application for Kubernetes & OIDC**
+**Simple application for Kubernetes CLI configuration with OIDC**
 
 Original source code from [coreos/dex repository](https://github.com/coreos/dex/tree/master/cmd/example-app)
 
@@ -10,7 +10,7 @@ Original source code from [coreos/dex repository](https://github.com/coreos/dex/
 
 ```shell
 NAME:
-    loginapp - Kube config application for OIDC
+    loginapp - Simple application for Kubernetes CLI configuration with OIDC
 
 AUTHOR:
     fydrah <flav.hardy@gmail.com>
@@ -19,7 +19,7 @@ USAGE:
     loginapp [global options] command [command options]
 
 COMMANDS:
-    serve    Run loginapp server
+    serve    Run loginapp application
     help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -32,8 +32,6 @@ GLOBAL OPTIONS:
 ```yaml
 # AppName
 name: "Kubernetes Auth"
-# Enable debug mode
-debug: false
 # Bind IP and port (format: "IP:PORT")
 listen: "0.0.0.0:5555"
 # OIDC relative configuration
@@ -98,8 +96,8 @@ EOF
   docker-compose up -d
 ```
 
-User: admin@example.com
-Password: password
+  * User: admin@example.com
+  * Password: password
 
 * Manage dependencies
 

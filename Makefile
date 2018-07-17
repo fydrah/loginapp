@@ -1,10 +1,12 @@
 BINDIR			:= bin
 GOFLAGS			:=
-LDFLAGS			:= -w -s
 DOCKER_REPOSITORY	:= quay.io/fydrah/loginapp
 GIT_REPOSITORY		:= github.com/fydrah/loginapp
 GIT_COMMIT_ID		:= $(shell git log -n 1 --pretty=format:%h)
+GIT_TAG			:= $(shell git describe --tags)
 DOCKERFILES		:= dockerfiles
+
+LDFLAGS			= -w -s -X main.GitVersion=$(GIT_TAG) -X main.GitHash=$(GIT_COMMIT_ID)
 
 .PHONY: all
 all: build

@@ -33,7 +33,11 @@ import (
 	"github.com/cenkalti/backoff"
 )
 
-var logger = logrus.New()
+var (
+	GitVersion = "X.X.X"
+	GitHash = "XXXXXXX"
+	logger = logrus.New()
+)
 
 /**
  * Type def
@@ -316,7 +320,8 @@ GLOBAL OPTIONS:
     {{range .VisibleFlags}}{{.}}
     {{end}}{{end}}
 `
-	app.UsageText = "Kube config application for OIDC"
+	app.UsageText = "Simple application for Kubernetes CLI configuration with OIDC"
+	app.Version = fmt.Sprintf("%v build %v", GitVersion, GitHash)
 	app.Authors = []cli.Author{
 		cli.Author{
 			Name:  "fydrah",
@@ -326,7 +331,7 @@ GLOBAL OPTIONS:
 	app.Commands = []cli.Command{
 		{
 			Name: "serve",
-			Usage: "Run loginapp server",
+			Usage: "Run loginapp application",
 			SkipFlagParsing: true,
 			ArgsUsage: "[configuration file]",
 			Before: func(c *cli.Context) error {
