@@ -15,9 +15,20 @@ limitations under the License.
 */
 package main
 
+import (
+	"net/http"
+)
+
 func (s *Server) Routes() {
-	s.router.GET("/", s.HandleGetIndex)
-	s.router.GET("/callback/cli", s.HandleGetCallbackCLI)
+	if s.config.WebOutput.SkipMainPage {
+		s.router.GET("/", s.HandleLogin)
+		logger.Debug("routes loaded, skipping main page")
+	} else {
+		s.router.GET("/", s.HandleGetIndex)
+		s.router.POST("/login", s.HandleLogin)
+		logger.Debug("routes loaded, using main page")
+	}
+	s.router.GET("/callback", s.HandleGetCallback)
 	s.router.GET("/healthz", s.HandleGetHealthz)
-	s.router.POST("/login", s.HandlePostLogin)
+	s.router.ServeFiles("/assets/*filepath", http.Dir(s.config.WebOutput.AssetsDir))
 }

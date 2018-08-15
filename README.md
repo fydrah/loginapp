@@ -2,7 +2,7 @@
 
 [![Docker Repository on Quay](https://quay.io/repository/fydrah/loginapp/status "Docker Repository on Quay")](https://quay.io/repository/fydrah/loginapp)
 
-**Simple application for Kubernetes CLI configuration with OIDC**
+**Web application for Kubernetes CLI configuration with OIDC**
 
 Original source code from [coreos/dex repository](https://github.com/coreos/dex/tree/master/cmd/example-app)
 
@@ -10,7 +10,7 @@ Original source code from [coreos/dex repository](https://github.com/coreos/dex/
 
 ```shell
 NAME:
-    loginapp - Simple application for Kubernetes CLI configuration with OIDC
+    loginapp - Web application for Kubernetes CLI configuration with OIDC
 
 AUTHOR:
     fydrah <flav.hardy@gmail.com>
@@ -31,46 +31,72 @@ GLOBAL OPTIONS:
 
 ```yaml
 # AppName
+# default: mandatory
 name: "Kubernetes Auth"
 # Bind IP and port (format: "IP:PORT")
+# default: mandatory
 listen: "0.0.0.0:5555"
-# OIDC relative configuration
+# OIDC configuration
 oidc:
   # Client configuration
   client:
     # Application ID
+    # default: mandatory
     id: "loginapp"
     # Application Secret
+    # default: mandatory
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
     # Application Redirect URL
+    # default: mandatory
     redirect_url: "https://127.0.0.1:5555/callback"
   # Issuer configuration
   issuer:
     # Location of issuer root CA certificate
+    # default: mandatory
     root_ca: "example/ssl/ca.pem"
     # Issuer URL
+    # default: mandatory
     url: "https://dex.example.com:5556"
   # Extra scopes
+  # default: []
   extra_scopes:
     - groups
   # Enable offline scope
+  # default: false
   offline_as_scope: true
   # Request token on behalf of other clients
+  # default: []
   cross_clients: []
 # Tls support
 tls:
   # Enable tls termination
+  # default: false
   enabled: true
   # Certificate location
+  # default: mandatory if tls.enabled is true
   cert: example/ssl/cert.pem
   # Key location
+  # default: mandatory if tls.enabled is true
   key: example/ssl/key.pem
 # Logging configuration
 log:
   # Loglevel: debug|info|warning|error|fatal|panic
+  # default: info
   level: debug
   # Log format: json|text
+  # default: json
   format: json
+# Configure the web behavior
+web_output:
+  # ClientID to output (useful for cross_client)
+  # default: 'oidc.client.id'
+  main_client_id: loginapp
+  # Assets directory
+  # default: ${pwd}/assets
+  assets_dir: /assets
+  # Skip main page of login app
+  # default: false
+  skip_main_page: false
 ```
 
 ## Kubernetes
@@ -82,7 +108,7 @@ This application is built to run on a Kubernetes cluster. You will find usage ex
 
 ## Dev
 
-* Setup Dex
+###### Setup Dex
 
 ```
   # Configure github oauth secrets if needed.
@@ -96,10 +122,10 @@ EOF
   docker-compose up -d
 ```
 
-  * User: admin@example.com
-  * Password: password
+* User: admin@example.com
+* Password: password
 
-* Manage dependencies
+###### Manage dependencies
 
 Loginapp uses [golang dep](https://golang.github.io/dep/docs/installation.html).
 
@@ -108,7 +134,7 @@ Loginapp uses [golang dep](https://golang.github.io/dep/docs/installation.html).
   dep ensure
 ```
 
-* Compile, configure and run
+###### Compile, configure and run
 
 Configuration files are located in [example directory](./example/)
 
@@ -117,7 +143,31 @@ Configuration files are located in [example directory](./example/)
   bin/loginapp serve example/config-loginapp.yaml
 ```
 
-## Contibutions
+You can also build a temporary Docker image for loginapp, and
+run it with docker-compose (uncomment lines and replace image name):
+
+```
+  make docker-tmp
+```
+
+###### Run checks
+
+Some checks can be launched before commits:
+* errorcheck: check for unchecked errors
+* gocyclo: cyclomatic complexities of functions
+* gosimple: simplify code
+
+```
+  make checks
+```
+
+Run also gofmt before any new commit:
+
+```
+  make gofmt
+```
+
+## Contributions
 
 Contributions (and issues) are welcomed.
 

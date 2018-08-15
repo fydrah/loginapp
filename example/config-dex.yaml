@@ -21,10 +21,16 @@ oauth2:
 staticClients:
 - id: loginapp
   redirectURIs:
-  - 'https://127.0.0.1:5555/callback/cli'
-  - 'https://127.0.0.1:5555/callback/dashboard'
+  - 'https://127.0.0.1:5555/callback'
   name: 'Loginapp'
   secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+- id: web
+  redirectURIs:
+  - 'https://127.0.0.1:5555/callback'
+  name: 'Web'
+  secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+  trustedPeers:
+  - loginapp
 
 enablePasswordDB: true
 staticPasswords:

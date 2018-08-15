@@ -20,6 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -49,17 +50,15 @@ type AppConfig struct {
 		Level  string `yaml:"level"`
 		Format string `yaml:"format"`
 	} `yaml:"log"`
+	WebOutput struct {
+		MainClientID string `yaml:"main_client_id"`
+		AssetsDir    string `yaml:"assets_dir"`
+		SkipMainPage bool   `yaml:"skip_main_page"`
+	} `yaml:"web_output"`
 }
 
-func (a *AppConfig) Init(config string) error {
-	configData, err := ioutil.ReadFile(config)
-	if err != nil {
-		return fmt.Errorf("failed to read config file %s: %v", config, err)
-	}
-	if err := yaml.Unmarshal(configData, &a); err != nil {
-		return fmt.Errorf("error parse config file %s: %v", config, err)
-	}
-	switch f := strings.ToLower(a.Log.Format); f {
+func ConfigLogger(format string, logLevel string) {
+	switch f := format; f {
 	case "json":
 		logger.Formatter = &logrus.JSONFormatter{}
 	case "text":
@@ -67,9 +66,10 @@ func (a *AppConfig) Init(config string) error {
 	default:
 		logger.Formatter = &logrus.JSONFormatter{}
 		logger.Warningf("Format %q not available, use json|text. Using json format", f)
+		format = "json"
 	}
-	logger.Debugf("Using %s log format", a.Log.Format)
-	switch f := strings.ToLower(a.Log.Level); f {
+	logger.Debugf("Using %s log format", format)
+	switch l := logLevel; l {
 	case "debug":
 		logger.Level = logrus.DebugLevel
 	case "info":
@@ -80,9 +80,75 @@ func (a *AppConfig) Init(config string) error {
 		logger.Level = logrus.ErrorLevel
 	default:
 		logger.Level = logrus.InfoLevel
-		logger.Warningf("Log level %q not available, use debug|info|warning|error. Using Info log level", f)
+		logger.Warningf("Log level %q not available, use debug|info|warning|error. Using Info log level", l)
+		logLevel = "info"
 	}
-	logger.Debugf("Using %s log level", a.Log.Format)
+	logger.Debugf("Using %s log level", logLevel)
+}
+
+func (a *AppConfig) Init(config string) error {
+	/*
+		Extract data from yaml configuration file
+	*/
+	logger.Debugf("Loading configuration file: %v", config)
+	configData, err := ioutil.ReadFile(config)
+	if err != nil {
+		return fmt.Errorf("failed to read config file %s: %v", config, err)
+	}
+	logger.Debugf("Unmarshal data: %v", configData)
+	if err := yaml.Unmarshal(configData, &a); err != nil {
+		return fmt.Errorf("error parse config file %s: %v", config, err)
+	}
+
+	/*
+		Configure log level
+	*/
+	ConfigLogger(strings.ToLower(a.Log.Format), strings.ToLower(a.Log.Level))
+
+	/*
+		Configuration checks
+		(inspired from https://github.com/coreos/dex/blob/master/cmd/dex/serve.go)
+	*/
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting current directory: %v", err)
+	}
+	if a.WebOutput.AssetsDir == "" {
+		a.WebOutput.AssetsDir = fmt.Sprintf("%v/assets", currentDir)
+		logger.Infof("no assets dir specified, using default: %v", a.WebOutput.AssetsDir)
+	}
+	if a.WebOutput.MainClientID == "" {
+		a.WebOutput.MainClientID = a.OIDC.Client.Id
+		logger.Infof("no output main_client_id specified, using default: %v", a.WebOutput.MainClientID)
+	}
+	configChecks := []struct {
+		failed bool
+		msg    string
+	}{
+		{a.Name == "", "no name specified"},
+		{a.Listen == "", "no bind 'ip:port' specified"},
+		{a.OIDC.Client.Id == "", "no client id specified"},
+		{a.OIDC.Client.Secret == "", "no client secret specified"},
+		{a.OIDC.Client.RedirectURL == "", "no redirect url specified"},
+		{a.OIDC.Issuer.Url == "", "no issuer url specified"},
+		{a.OIDC.Issuer.RootCA == "", "no issuer root_ca specified"},
+		{a.Tls.Enabled && a.Tls.Cert == "", "no tls cert specified"},
+		{a.Tls.Enabled && a.Tls.Key == "", "no tls key specified"},
+	}
+	checksFailed := func() bool {
+		checkFailed := false
+		for _, c := range configChecks {
+			if c.failed {
+				logger.Errorf("Check failed: %v", c.msg)
+				checkFailed = true
+			}
+		}
+		return checkFailed
+	}()
+	if checksFailed {
+		return fmt.Errorf("Error while loading configuration")
+	}
+
 	logger.Debugf("Configuration loaded: %+v", a)
 	return nil
 }

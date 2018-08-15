@@ -17,3 +17,16 @@ services:
     - 5556:5556
     extra_hosts:
     - "dex.example.com:127.0.0.1"
+#  loginapp:
+#    # use `make docker-tmp` to generate a temporary docker image
+#    image: quay.io/fydrah/loginapp:1535813
+#    volumes:
+#    - ./example/ssl:/ssl
+#    - ./example/config-loginapp-docker.yaml:/config.yaml
+#    command:
+#    - serve
+#    - /config.yaml
+#    ports:
+#    - 5555:5555
+#    external_links:
+#    - dex:dex.example.com

@@ -52,6 +52,7 @@ type Server struct {
 }
 
 type KubeUserInfo struct {
+	ClientID     string
 	IDToken      string
 	RefreshToken string
 	RedirectURL  string
@@ -62,17 +63,17 @@ type KubeUserInfo struct {
 /**
  * OpenID
  */
-func (s *Server) OAuth2Config(scopes []string, endpoint string) *oauth2.Config {
+func (s *Server) OAuth2Config(scopes []string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     s.config.OIDC.Client.Id,
 		ClientSecret: s.config.OIDC.Client.Secret,
-		RedirectURL:  s.config.OIDC.Client.RedirectURL + "/" + endpoint,
+		RedirectURL:  s.config.OIDC.Client.RedirectURL,
 		Endpoint:     s.provider.Endpoint(),
 		Scopes:       scopes,
 	}
 }
 
-func (s *Server) PrepareCallbackUrl(endpoint string) string {
+func (s *Server) PrepareCallbackUrl() string {
 	// Prepare scopes
 	var (
 		scopes      []string
@@ -89,11 +90,11 @@ func (s *Server) PrepareCallbackUrl(endpoint string) string {
 	scopes = append(scopes, "openid", "profile", "email", "groups")
 	if s.config.OIDC.OfflineAsScope {
 		scopes = append(scopes, "offline_access")
-		authCodeURL = s.OAuth2Config(scopes, endpoint).AuthCodeURL(s.config.Name)
+		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
 	} else if !s.config.OIDC.OfflineAsScope {
-		authCodeURL = s.OAuth2Config(scopes, endpoint).AuthCodeURL(s.config.Name)
+		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
 	} else {
-		authCodeURL = s.OAuth2Config(scopes, endpoint).AuthCodeURL(s.config.Name, oauth2.AccessTypeOffline)
+		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name, oauth2.AccessTypeOffline)
 	}
 	return authCodeURL
 }
@@ -124,29 +125,26 @@ func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ http
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *Server) HandlePostLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	switch r.FormValue("access") {
-	case "CLI":
-		http.Redirect(w, r, s.PrepareCallbackUrl("cli"), http.StatusSeeOther)
-	}
+func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	http.Redirect(w, r, s.PrepareCallbackUrl(), http.StatusSeeOther)
 }
 
-func (s *Server) HandleGetCallbackCLI(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	k, err := s.ProcessCallback(w, r, "cli")
+func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	kc, err := s.ProcessCallback(w, r)
 	if err != nil {
 		logger.Errorf("error handling cli callback: %v", err)
 		return
 	}
-	renderTemplate(w, tokenTmpl, k)
+	renderTemplate(w, tokenTmpl, kc)
 }
 
-func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request, c string) (KubeUserInfo, error) {
+func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUserInfo, error) {
 	var (
 		err         error
 		token       *oauth2.Token
 		json_claims map[string]interface{}
 	)
-	oauth2Config := s.OAuth2Config(nil, c)
+	oauth2Config := s.OAuth2Config(nil)
 
 	// Authorization redirect callback from OAuth2 auth flow.
 	if errMsg := r.FormValue("error"); errMsg != "" {
@@ -200,6 +198,7 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request, c strin
 		RedirectURL:  oauth2Config.RedirectURL,
 		Claims:       json_claims,
 		ClientSecret: s.config.OIDC.Client.Secret,
+		ClientID:     s.config.WebOutput.MainClientID,
 	}, nil
 }
 
@@ -253,7 +252,6 @@ func (s *Server) Run() error {
 		}
 		return nil
 	}
-	//provider, err := oidc.NewProvider(s.context, s.config.OIDC.Issuer.Url)
 	if err := backoff.Retry(setupProvider, backoff.NewExponentialBackOff()); err != nil {
 		return err
 	}
@@ -320,7 +318,7 @@ GLOBAL OPTIONS:
     {{range .VisibleFlags}}{{.}}
     {{end}}{{end}}
 `
-	app.UsageText = "Simple application for Kubernetes CLI configuration with OIDC"
+	app.UsageText = "Web application for Kubernetes CLI configuration with OIDC"
 	app.Version = fmt.Sprintf("%v build %v", GitVersion, GitHash)
 	app.Authors = []cli.Author{
 		{
