@@ -1,6 +1,7 @@
 # Loginapp
 
 [![Docker Repository on Quay](https://quay.io/repository/fydrah/loginapp/status "Docker Repository on Quay")](https://quay.io/repository/fydrah/loginapp)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffydrah%2Floginapp.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffydrah%2Floginapp?ref=badge_shield)
 
 **Web application for Kubernetes CLI configuration with OIDC**
 
@@ -172,3 +173,7 @@ Run also gofmt before any new commit:
 Contributions (and issues) are welcomed.
 
 I started this project to learn golang, so you will surely find some weird stuff. Please let me know if some code could be improved.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffydrah%2Floginapp.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffydrah%2Floginapp?ref=badge_large)
