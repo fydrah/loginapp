@@ -80,11 +80,13 @@ var tokenTmpl = template.Must(template.New("token.html").Parse(`<html>
   user:
     auth-provider:
       config:
-        client-id: {{ .ClientID }}
-        client-secret: {{ .ClientSecret }}
-        id-token: {{ .IDToken }}
         idp-issuer-url: {{ .Claims.iss }}
+        client-id: {{ .ClientID }}
+        id-token: {{ .IDToken }}
+{{- if ne .RefreshToken "" }}
+        client-secret: {{ .ClientSecret }}
         refresh-token: {{ .RefreshToken }}
+{{- end }}
       name: oidc</code></pre>
                </div>
             </li>
