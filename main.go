@@ -88,13 +88,11 @@ func (s *Server) PrepareCallbackUrl() string {
 	}
 
 	scopes = append(scopes, "openid", "profile", "email", "groups")
-	if s.config.OIDC.OfflineAsScope {
+	if *s.config.OIDC.OfflineAsScope {
 		scopes = append(scopes, "offline_access")
 		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
-	} else if !s.config.OIDC.OfflineAsScope {
-		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
 	} else {
-		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name, oauth2.AccessTypeOffline)
+		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
 	}
 	return authCodeURL
 }
@@ -265,21 +263,21 @@ func (s *Server) Run() error {
 		return fmt.Errorf("Failed to parse provider scopes_supported: %v", err)
 	}
 
-	if len(ss.ScopesSupported) == 0 {
-		// scopes_supported is a "RECOMMENDED" discovery claim, not a required
-		// one. If missing, assume that the provider follows the spec and has
-		// an "offline_access" scope.
-		s.config.OIDC.OfflineAsScope = true
-	} else {
-		// See if scopes_supported has the "offline_access" scope.
-		s.config.OIDC.OfflineAsScope = func() bool {
-			for _, scope := range ss.ScopesSupported {
-				if scope == oidc.ScopeOfflineAccess {
-					return true
+	if s.config.OIDC.OfflineAsScope == nil {
+		if len(ss.ScopesSupported) > 0 {
+			// See if scopes_supported has the "offline_access" scope.
+			s.config.OIDC.OfflineAsScope = func() *bool {
+				b := new(bool)
+				for _, scope := range ss.ScopesSupported {
+					if scope == oidc.ScopeOfflineAccess {
+						*b = true
+						return b
+					}
 				}
-			}
-			return false
-		}()
+				*b = false
+				return b
+			}()
+		}
 	}
 
 	s.provider = provider

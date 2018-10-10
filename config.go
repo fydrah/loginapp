@@ -38,7 +38,7 @@ type AppConfig struct {
 			RootCA string `yaml:"root_ca"`
 		} `yaml:"issuer"`
 		ExtraScopes    []string `yaml:"extra_scopes"`
-		OfflineAsScope bool     `yaml:"offline_as_scope"`
+		OfflineAsScope *bool    `yaml:"offline_as_scope"`
 		CrossClients   []string `yaml:"cross_clients"`
 	} `yaml:"oidc"`
 	Tls struct {
