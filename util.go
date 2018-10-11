@@ -26,6 +26,10 @@ import (
 	"time"
 )
 
+func httpClient() *http.Client {
+	return &http.Client{}
+}
+
 func httpClientForRootCAs(rootCAs string) (*http.Client, error) {
 	tlsConfig := tls.Config{RootCAs: x509.NewCertPool()}
 	rootCABytes, err := ioutil.ReadFile(rootCAs)

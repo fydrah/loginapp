@@ -233,11 +233,17 @@ func (s *Server) Run() error {
 	s.Routes()
 	// client setup
 	if s.client == nil {
-		client, err := httpClientForRootCAs(s.config.OIDC.Issuer.RootCA)
-		if err != nil {
-			return err
+		var (
+			err error
+		)
+		if !s.config.OIDC.Issuer.Insecure {
+			s.client, err = httpClientForRootCAs(s.config.OIDC.Issuer.RootCA)
+			if err != nil {
+				return err
+			}
+		} else {
+			s.client = httpClient()
 		}
-		s.client = client
 	}
 	// OIDC setup
 	// Retry with backoff

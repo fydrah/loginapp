@@ -34,6 +34,7 @@ type AppConfig struct {
 			RedirectURL string `yaml:"redirect_url"`
 		} `yaml:"client"`
 		Issuer struct {
+			Insecure bool `yaml:"insecure"`
 			Url    string `yaml:"url"`
 			RootCA string `yaml:"root_ca"`
 		} `yaml:"issuer"`
@@ -131,7 +132,7 @@ func (a *AppConfig) Init(config string) error {
 		{a.OIDC.Client.Secret == "", "no client secret specified"},
 		{a.OIDC.Client.RedirectURL == "", "no redirect url specified"},
 		{a.OIDC.Issuer.Url == "", "no issuer url specified"},
-		{a.OIDC.Issuer.RootCA == "", "no issuer root_ca specified"},
+		{!a.OIDC.Issuer.Insecure && a.OIDC.Issuer.RootCA == "", "no issuer root_ca specified"},
 		{a.Tls.Enabled && a.Tls.Cert == "", "no tls cert specified"},
 		{a.Tls.Enabled && a.Tls.Key == "", "no tls key specified"},
 	}
@@ -148,6 +149,20 @@ func (a *AppConfig) Init(config string) error {
 	if checksFailed {
 		return fmt.Errorf("Error while loading configuration")
 	}
+	configWarns := []struct {
+		warn   bool
+		msg    string
+	}{
+		{!a.Tls.Enabled , "TLS disabled for loginapp"},
+		{a.OIDC.Issuer.Insecure , "Issuer endpoint is insecure"},
+	}
+	go func() {
+		for _, c := range configWarns {
+			if c.warn {
+				logger.Warnf("%v: this is not recommended for production setup", c.msg)
+			}
+		}
+	}()
 
 	logger.Debugf("Configuration loaded: %+v", a)
 	return nil
