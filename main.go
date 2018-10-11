@@ -25,7 +25,6 @@ import (
 	"github.com/coreos/go-oidc"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
 	"golang.org/x/oauth2"
 	"net/http"
 	"os"
@@ -34,8 +33,6 @@ import (
 )
 
 var (
-	GitVersion = "X.X.X"
-	GitHash    = "XXXXXXX"
 	logger     = logrus.New()
 )
 
@@ -94,6 +91,7 @@ func (s *Server) PrepareCallbackUrl() string {
 	} else {
 		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
 	}
+	logger.Debugf("Request token with the following scopes: %v", scopes)
 	return authCodeURL
 }
 
@@ -107,7 +105,7 @@ func (s *Server) HandleGetIndex(w http.ResponseWriter, r *http.Request, _ httpro
 func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Check if provider is setup
 	if s.provider == nil {
-		logger.Debug("Provider is not yet setup or anavailable")
+		logger.Debug("Provider is not yet setup or unavailable")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
@@ -190,6 +188,7 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 	if err := json.Unmarshal(claims, &json_claims); err != nil {
 		panic(err)
 	}
+	logger.Debugf("Token issued with claims: %v", json_claims)
 	return KubeUserInfo{
 		IDToken:      rawIDToken,
 		RefreshToken: token.RefreshToken,
@@ -299,58 +298,7 @@ func (s *Server) Run() error {
 }
 
 func main() {
-	app := cli.NewApp()
-	cli.AppHelpTemplate = `
-NAME:
-    {{.Name}} - {{.UsageText}}
-{{if len .Authors}}
-AUTHOR:
-    {{range .Authors}}{{ . }}{{end}}
-{{end}}
-USAGE:
-    {{.HelpName}}{{if .VisibleFlags}} [global options]{{end}}{{if .Commands}} command [command options]{{end}}
-{{if .Commands}}
-COMMANDS:
-{{range .Commands}}{{if not .HideHelp}}    {{join .Names ", "}}{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
-GLOBAL OPTIONS:
-    {{range .VisibleFlags}}{{.}}
-    {{end}}{{end}}
-`
-	app.UsageText = "Web application for Kubernetes CLI configuration with OIDC"
-	app.Version = fmt.Sprintf("%v build %v", GitVersion, GitHash)
-	app.Authors = []cli.Author{
-		{
-			Name:  "fydrah",
-			Email: "flav.hardy@gmail.com",
-		},
-	}
-	app.Commands = []cli.Command{
-		{
-			Name:            "serve",
-			Usage:           "Run loginapp application",
-			SkipFlagParsing: true,
-			ArgsUsage:       "[configuration file]",
-			Before: func(c *cli.Context) error {
-				return nil
-			},
-			Action: func(c *cli.Context) error {
-				if len(c.Args()) == 0 {
-					if err := cli.ShowCommandHelp(c, c.Command.Name); err != nil {
-						return fmt.Errorf("Error while rendering command help: %v", err)
-					}
-					return fmt.Errorf("Missing argument")
-				}
-				s := &Server{}
-				if err := s.config.Init(c.Args().First()); err != nil {
-					return err
-				}
-				if err := s.Run(); err != nil {
-					return err
-				}
-				return nil
-			},
-		},
-	}
+	app := NewCli()
 	if err := app.Run(os.Args); err != nil {
 		logger.Fatal(err)
 	}
