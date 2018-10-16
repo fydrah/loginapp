@@ -76,7 +76,7 @@ var tokenTmpl = template.Must(template.New("token.html").Parse(`<html>
                <label>Copy this in your ~/.kube/config file</label>
                <div class="code-box-copy">
                   <button class="code-box-copy__btn" title="Copy" type="button" data-clipboard-target="#kubeconfig"></button>
-                  <pre><code class="language-yaml" id="kubeconfig">- name: {{ .Claims.name }}
+                  <pre><code class="language-yaml" id="kubeconfig">- name: {{ .UsernameClaim }}
   user:
     auth-provider:
       config:

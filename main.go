@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	logger     = logrus.New()
+	logger = logrus.New()
 )
 
 /**
@@ -49,12 +49,13 @@ type Server struct {
 }
 
 type KubeUserInfo struct {
-	ClientID     string
-	IDToken      string
-	RefreshToken string
-	RedirectURL  string
-	Claims       interface{}
-	ClientSecret string
+	ClientID      string
+	IDToken       string
+	RefreshToken  string
+	RedirectURL   string
+	Claims        interface{}
+	ClientSecret  string
+	UsernameClaim string
 }
 
 /**
@@ -188,14 +189,21 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 	if err := json.Unmarshal(claims, &json_claims); err != nil {
 		panic(err)
 	}
+	var username_claim interface{}
+	if username_claim = json_claims[s.config.WebOutput.MainUsernameClaim]; username_claim == nil {
+		msg := fmt.Sprintf("Failed to find a claim matching the main_username_claim '%v'", s.config.WebOutput.MainUsernameClaim)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return KubeUserInfo{}, fmt.Errorf(msg)
+	}
 	logger.Debugf("Token issued with claims: %v", json_claims)
 	return KubeUserInfo{
-		IDToken:      rawIDToken,
-		RefreshToken: token.RefreshToken,
-		RedirectURL:  oauth2Config.RedirectURL,
-		Claims:       json_claims,
-		ClientSecret: s.config.OIDC.Client.Secret,
-		ClientID:     s.config.WebOutput.MainClientID,
+		IDToken:       rawIDToken,
+		RefreshToken:  token.RefreshToken,
+		RedirectURL:   oauth2Config.RedirectURL,
+		Claims:        json_claims,
+		ClientSecret:  s.config.OIDC.Client.Secret,
+		ClientID:      s.config.WebOutput.MainClientID,
+		UsernameClaim: username_claim.(string),
 	}, nil
 }
 

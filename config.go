@@ -51,6 +51,7 @@ type AppConfig struct {
 		Format string `yaml:"format"`
 	} `yaml:"log"`
 	WebOutput struct {
+		MainUsernameClaim string `yaml:"main_username_claim"`
 		MainClientID      string `yaml:"main_client_id"`
 		AssetsDir         string `yaml:"assets_dir"`
 		SkipMainPage      bool   `yaml:"skip_main_page"`
@@ -162,6 +163,9 @@ func (a *AppConfig) Init(config string) error {
 		}},
 		{a.WebOutput.AssetsDir == "", fmt.Sprintf("no assets_dir specified, using default: %v", defaultAssetsDir), func() {
 			a.WebOutput.AssetsDir = defaultAssetsDir
+		}},
+		{a.WebOutput.MainUsernameClaim == "", "no output main_username_claim specified, using default: 'name'", func() {
+			a.WebOutput.MainUsernameClaim = "name"
 		}},
 	}
 	_ = a.Check(defaultChecks)

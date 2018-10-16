@@ -91,8 +91,11 @@ log:
 # Configure the web behavior
 web_output:
   # ClientID to output (useful for cross_client)
-  # default: 'oidc.client.id'
+  # default: value of 'oidc.client.id'
   main_client_id: loginapp
+  # Claims to use for kubeconfig username.
+  # default: name
+  main_username_claim: email
   # Assets directory
   # default: ${pwd}/assets
   assets_dir: /assets
@@ -100,6 +103,10 @@ web_output:
   # default: false
   skip_main_page: false
 ```
+
+Two main examples are available:
+* [Full configuration example](./example/config-loginapp-full.yaml) (each config option is set)
+* [Minimal configuration example](./example/config-loginapp-minimal.yaml) (only mandatory options)
 
 ## Kubernetes
 
@@ -112,14 +119,20 @@ This application is built to run on a Kubernetes cluster. You will find usage ex
 
 ###### Setup Dex
 
-```
+* (Optional) Configure GitHub OAuth App
+
+```shell
   # Configure github oauth secrets if needed.
   # You must create an app in your github account before.
   cat <<EOF > dev.env
 GITHUB_CLIENT_ID=yourclientid
 GITHUB_CLIENT_SECRET=yoursecretid
 EOF
-  # Configure hosts entry
+```
+
+* Configure host entry
+
+```shell
   echo "127.0.0.1 dex.example.com" | sudo tee -a /etc/hosts
   docker-compose up -d
 ```
@@ -131,7 +144,7 @@ EOF
 
 Loginapp uses [golang dep](https://golang.github.io/dep/docs/installation.html).
 
-```
+```shell
   # Update dependencies
   dep ensure
 ```
@@ -140,15 +153,15 @@ Loginapp uses [golang dep](https://golang.github.io/dep/docs/installation.html).
 
 Configuration files are located in [example directory](./example/)
 
-```
+```shell
   make
-  bin/loginapp serve example/config-loginapp.yaml
+  bin/loginapp serve example/config-loginapp-full.yaml
 ```
 
 You can also build a temporary Docker image for loginapp, and
 run it with docker-compose (uncomment lines and replace image name):
 
-```
+```shell
   make docker-tmp
 ```
 
@@ -159,13 +172,13 @@ Some checks can be launched before commits:
 * gocyclo: cyclomatic complexities of functions
 * gosimple: simplify code
 
-```
+```shell
   make checks
 ```
 
 Run also gofmt before any new commit:
 
-```
+```shell
   make gofmt
 ```
 
