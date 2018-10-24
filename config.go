@@ -29,19 +29,19 @@ type AppConfig struct {
 	Listen string `yaml:"listen"`
 	OIDC   struct {
 		Client struct {
-			Id          string `yaml:"id"`
+			ID          string `yaml:"id"`
 			Secret      string `yaml:"secret"`
 			RedirectURL string `yaml:"redirect_url"`
 		} `yaml:"client"`
 		Issuer struct {
-			Url    string `yaml:"url"`
+			URL    string `yaml:"url"`
 			RootCA string `yaml:"root_ca"`
 		} `yaml:"issuer"`
 		ExtraScopes    []string `yaml:"extra_scopes"`
 		OfflineAsScope *bool    `yaml:"offline_as_scope"`
 		CrossClients   []string `yaml:"cross_clients"`
 	} `yaml:"oidc"`
-	Tls struct {
+	TLS struct {
 		Enabled bool   `yaml:"enabled"`
 		Cert    string `yaml:"cert"`
 		Key     string `yaml:"key"`
@@ -51,13 +51,40 @@ type AppConfig struct {
 		Format string `yaml:"format"`
 	} `yaml:"log"`
 	WebOutput struct {
-		MainClientID string `yaml:"main_client_id"`
-		AssetsDir    string `yaml:"assets_dir"`
-		SkipMainPage bool   `yaml:"skip_main_page"`
+		MainUsernameClaim string `yaml:"main_username_claim"`
+		MainClientID      string `yaml:"main_client_id"`
+		AssetsDir         string `yaml:"assets_dir"`
+		SkipMainPage      bool   `yaml:"skip_main_page"`
 	} `yaml:"web_output"`
 }
 
-func ConfigLogger(format string, logLevel string) {
+// appCheck struct
+// used by check function
+type appCheck struct {
+	Condition     bool
+	Message       string
+	DefaultAction func()
+}
+
+// check checks each appCheck, if one
+// check fails, return true
+func check(checks []appCheck) bool {
+	checkFailed := false
+	for _, c := range checks {
+		if c.Condition {
+			logger.Error(c.Message)
+			checkFailed = true
+			if c.DefaultAction != nil {
+				c.DefaultAction()
+			}
+		}
+	}
+	return checkFailed
+}
+
+// configLogger setup application logger
+// Default loglevel is info
+func configLogger(format string, logLevel string) {
 	switch f := format; f {
 	case "json":
 		logger.Formatter = &logrus.JSONFormatter{}
@@ -86,6 +113,9 @@ func ConfigLogger(format string, logLevel string) {
 	logger.Debugf("Using %s log level", logLevel)
 }
 
+// Init load configuration,
+// setup logger and run
+// error/warning checks
 func (a *AppConfig) Init(config string) error {
 	/*
 		Extract data from yaml configuration file
@@ -103,7 +133,7 @@ func (a *AppConfig) Init(config string) error {
 	/*
 		Configure log level
 	*/
-	ConfigLogger(strings.ToLower(a.Log.Format), strings.ToLower(a.Log.Level))
+	configLogger(strings.ToLower(a.Log.Format), strings.ToLower(a.Log.Level))
 
 	/*
 		Configuration checks
@@ -113,41 +143,43 @@ func (a *AppConfig) Init(config string) error {
 	if err != nil {
 		return fmt.Errorf("error getting current directory: %v", err)
 	}
-	if a.WebOutput.AssetsDir == "" {
-		a.WebOutput.AssetsDir = fmt.Sprintf("%v/assets", currentDir)
-		logger.Infof("no assets dir specified, using default: %v", a.WebOutput.AssetsDir)
+	defaultAssetsDir := fmt.Sprintf("%v/assets", currentDir)
+	/*
+		Error checks: list of checks which make loginapp failed
+	*/
+	errorChecks := []appCheck{
+		{a.Name == "", "no name specified", nil},
+		{a.Listen == "", "no bind 'ip:port' specified", nil},
+		{a.OIDC.Client.ID == "", "no client id specified", nil},
+		{a.OIDC.Client.Secret == "", "no client secret specified", nil},
+		{a.OIDC.Client.RedirectURL == "", "no redirect url specified", nil},
+		{a.OIDC.Issuer.URL == "", "no issuer url specified", nil},
+		{a.OIDC.Issuer.RootCA == "", "no issuer root_ca specified", nil},
+		{a.TLS.Enabled && a.TLS.Cert == "", "no tls cert specified", nil},
+		{a.TLS.Enabled && a.TLS.Key == "", "no tls key specified", nil},
 	}
-	if a.WebOutput.MainClientID == "" {
-		a.WebOutput.MainClientID = a.OIDC.Client.Id
-		logger.Infof("no output main_client_id specified, using default: %v", a.WebOutput.MainClientID)
-	}
-	configChecks := []struct {
-		failed bool
-		msg    string
-	}{
-		{a.Name == "", "no name specified"},
-		{a.Listen == "", "no bind 'ip:port' specified"},
-		{a.OIDC.Client.Id == "", "no client id specified"},
-		{a.OIDC.Client.Secret == "", "no client secret specified"},
-		{a.OIDC.Client.RedirectURL == "", "no redirect url specified"},
-		{a.OIDC.Issuer.Url == "", "no issuer url specified"},
-		{a.OIDC.Issuer.RootCA == "", "no issuer root_ca specified"},
-		{a.Tls.Enabled && a.Tls.Cert == "", "no tls cert specified"},
-		{a.Tls.Enabled && a.Tls.Key == "", "no tls key specified"},
-	}
-	checksFailed := func() bool {
-		checkFailed := false
-		for _, c := range configChecks {
-			if c.failed {
-				logger.Errorf("Check failed: %v", c.msg)
-				checkFailed = true
-			}
-		}
-		return checkFailed
-	}()
-	if checksFailed {
+	if check(errorChecks) {
 		return fmt.Errorf("Error while loading configuration")
 	}
+	/*
+		Default checks: list of check which make loginapp setup a default value
+
+		Even if logger report this as an error log, this is not handle as an error.
+		Hope the following issue will be merged to use loglevel as a parameter:
+		https://github.com/sirupsen/logrus/issues/646
+	*/
+	defaultChecks := []appCheck{
+		{a.WebOutput.MainClientID == "", fmt.Sprintf("no output main_client_id specified, using default: %v", a.OIDC.Client.ID), func() {
+			a.WebOutput.MainClientID = a.OIDC.Client.ID
+		}},
+		{a.WebOutput.AssetsDir == "", fmt.Sprintf("no assets_dir specified, using default: %v", defaultAssetsDir), func() {
+			a.WebOutput.AssetsDir = defaultAssetsDir
+		}},
+		{a.WebOutput.MainUsernameClaim == "", "no output main_username_claim specified, using default: 'name'", func() {
+			a.WebOutput.MainUsernameClaim = "name"
+		}},
+	}
+	_ = check(defaultChecks)
 
 	logger.Debugf("Configuration loaded: %+v", a)
 	return nil

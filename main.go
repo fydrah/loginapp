@@ -33,12 +33,11 @@ import (
 )
 
 var (
-	logger     = logrus.New()
+	logger = logrus.New()
 )
 
-/**
- * Type def
- */
+// Server is the description
+// of loginapp web server
 type Server struct {
 	client   *http.Client
 	config   AppConfig
@@ -48,21 +47,23 @@ type Server struct {
 	context  context.Context
 }
 
+// KubeUserInfo contains all values
+// needed by a user for OIDC authentication
 type KubeUserInfo struct {
-	ClientID     string
-	IDToken      string
-	RefreshToken string
-	RedirectURL  string
-	Claims       interface{}
-	ClientSecret string
+	ClientID      string
+	IDToken       string
+	RefreshToken  string
+	RedirectURL   string
+	Claims        interface{}
+	ClientSecret  string
+	UsernameClaim string
 }
 
-/**
- * OpenID
- */
+// OAuth2Config generate oauth config
+// based on scopes and yaml configuration file
 func (s *Server) OAuth2Config(scopes []string) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     s.config.OIDC.Client.Id,
+		ClientID:     s.config.OIDC.Client.ID,
 		ClientSecret: s.config.OIDC.Client.Secret,
 		RedirectURL:  s.config.OIDC.Client.RedirectURL,
 		Endpoint:     s.provider.Endpoint(),
@@ -70,7 +71,9 @@ func (s *Server) OAuth2Config(scopes []string) *oauth2.Config {
 	}
 }
 
-func (s *Server) PrepareCallbackUrl() string {
+// PrepareCallbackURL build and return
+// an authCodeURL based on scopes provided
+func (s *Server) PrepareCallbackURL() string {
 	// Prepare scopes
 	var (
 		scopes      []string
@@ -80,8 +83,8 @@ func (s *Server) PrepareCallbackUrl() string {
 	scopes = append(scopes, s.config.OIDC.ExtraScopes...)
 	// Prepare cross client auth
 	// see https://github.com/coreos/dex/blob/master/Documentation/custom-scopes-claims-clients.md
-	for _, cross_client := range s.config.OIDC.CrossClients {
-		scopes = append(scopes, "audience:server:client_id:"+cross_client)
+	for _, crossClient := range s.config.OIDC.CrossClients {
+		scopes = append(scopes, "audience:server:client_id:"+crossClient)
 	}
 
 	scopes = append(scopes, "openid", "profile", "email", "groups")
@@ -95,13 +98,16 @@ func (s *Server) PrepareCallbackUrl() string {
 	return authCodeURL
 }
 
-/**
- * Handlers
- */
+// HandleGetIndex serves
+// requests to index.html page
 func (s *Server) HandleGetIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	renderTemplate(w, indexTmpl, s.config)
 }
 
+// HandleGetHealthz serves
+// healthchecks requests (mainly
+// used by kubernetes healthchecks)
+// 200: OK, 500 otherwise
 func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Check if provider is setup
 	if s.provider == nil {
@@ -110,7 +116,7 @@ func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ http
 		return
 	}
 	// Check if our application can still contact the provider
-	wellKnown := strings.TrimSuffix(s.config.OIDC.Issuer.Url, "/") + "/.well-known/openid-configuration"
+	wellKnown := strings.TrimSuffix(s.config.OIDC.Issuer.URL, "/") + "/.well-known/openid-configuration"
 	_, err := s.client.Head(wellKnown)
 	if err != nil {
 		logger.Debugf("Error while checking provider access: %v", err)
@@ -121,10 +127,14 @@ func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ http
 	w.WriteHeader(http.StatusOK)
 }
 
+// HandleLogin redirect to
+// our IdP
 func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	http.Redirect(w, r, s.PrepareCallbackUrl(), http.StatusSeeOther)
+	http.Redirect(w, r, s.PrepareCallbackURL(), http.StatusSeeOther)
 }
 
+// HandleGetCallback serves
+// callback requests (from our IdP)
 func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	kc, err := s.ProcessCallback(w, r)
 	if err != nil {
@@ -134,11 +144,14 @@ func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ htt
 	renderTemplate(w, tokenTmpl, kc)
 }
 
+// ProcessCallback check callback
+// from our IdP after a successful user
+// login.
 func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUserInfo, error) {
 	var (
-		err         error
-		token       *oauth2.Token
-		json_claims map[string]interface{}
+		err        error
+		token      *oauth2.Token
+		jsonClaims map[string]interface{}
 	)
 	oauth2Config := s.OAuth2Config(nil)
 
@@ -185,25 +198,29 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 	if err := json.Indent(buff, []byte(claims), "", "  "); err != nil {
 		return KubeUserInfo{}, fmt.Errorf("Failed to format claims output: %v", err)
 	}
-	if err := json.Unmarshal(claims, &json_claims); err != nil {
+	if err := json.Unmarshal(claims, &jsonClaims); err != nil {
 		panic(err)
 	}
-	logger.Debugf("Token issued with claims: %v", json_claims)
+	var usernameClaim interface{}
+	if usernameClaim = jsonClaims[s.config.WebOutput.MainUsernameClaim]; usernameClaim == nil {
+		msg := fmt.Sprintf("Failed to find a claim matching the main_username_claim '%v'", s.config.WebOutput.MainUsernameClaim)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return KubeUserInfo{}, fmt.Errorf(msg)
+	}
+	logger.Debugf("Token issued with claims: %v", jsonClaims)
 	return KubeUserInfo{
-		IDToken:      rawIDToken,
-		RefreshToken: token.RefreshToken,
-		RedirectURL:  oauth2Config.RedirectURL,
-		Claims:       json_claims,
-		ClientSecret: s.config.OIDC.Client.Secret,
-		ClientID:     s.config.WebOutput.MainClientID,
+		IDToken:       rawIDToken,
+		RefreshToken:  token.RefreshToken,
+		RedirectURL:   oauth2Config.RedirectURL,
+		Claims:        jsonClaims,
+		ClientSecret:  s.config.OIDC.Client.Secret,
+		ClientID:      s.config.WebOutput.MainClientID,
+		UsernameClaim: usernameClaim.(string),
 	}, nil
 }
 
-/**
- * Logging middleware
- *
- * Log every request for Info loglevel only
- */
+// loggingHandler catch requests,
+// add metadata and log user requests
 func loggingHandler(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		t1 := time.Now()
@@ -220,9 +237,7 @@ func loggingHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-/**
- * Run
- */
+// Run launch app
 func (s *Server) Run() error {
 	var (
 		provider   *oidc.Provider
@@ -243,8 +258,8 @@ func (s *Server) Run() error {
 	// Retry with backoff
 	s.context = oidc.ClientContext(context.Background(), s.client)
 	setupProvider := func() error {
-		if provider, backoffErr = oidc.NewProvider(s.context, s.config.OIDC.Issuer.Url); backoffErr != nil {
-			logger.Errorf("Failed to query provider %q: %v", s.config.OIDC.Issuer.Url, backoffErr)
+		if provider, backoffErr = oidc.NewProvider(s.context, s.config.OIDC.Issuer.URL); backoffErr != nil {
+			logger.Errorf("Failed to query provider %q: %v", s.config.OIDC.Issuer.URL, backoffErr)
 			return backoffErr
 		}
 		return nil
@@ -280,12 +295,12 @@ func (s *Server) Run() error {
 	}
 
 	s.provider = provider
-	s.verifier = provider.Verifier(&oidc.Config{ClientID: s.config.OIDC.Client.Id})
+	s.verifier = provider.Verifier(&oidc.Config{ClientID: s.config.OIDC.Client.ID})
 
 	// Run
-	if s.config.Tls.Enabled {
+	if s.config.TLS.Enabled {
 		logger.Infof("listening on https://%s", s.config.Listen)
-		if err := fmt.Errorf("%v", http.ListenAndServeTLS(s.config.Listen, s.config.Tls.Cert, s.config.Tls.Key, loggingHandler(s.router))); err != nil {
+		if err := fmt.Errorf("%v", http.ListenAndServeTLS(s.config.Listen, s.config.TLS.Cert, s.config.TLS.Key, loggingHandler(s.router))); err != nil {
 			return err
 		}
 	} else {

@@ -6,10 +6,13 @@ import (
 )
 
 var (
+	// GitVersion returns latest tag
 	GitVersion = "X.X.X"
-	GitHash    = "XXXXXXX"
+	// GitHash return hash of latest commit
+	GitHash = "XXXXXXX"
 )
 
+// NewCli configure loginapp CLI
 func NewCli() *cli.App {
 	app := cli.NewApp()
 	cli.AppHelpTemplate = `

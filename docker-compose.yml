@@ -6,7 +6,8 @@ services:
     image: quay.io/coreos/dex:v2.10.0
     volumes:
     - ./example/ssl:/ssl
-    - ./example/config-dex.yaml:/config.yaml
+    - ./example/config-dex-full.yaml:/config.yaml
+    #- ./example/config-dex-minimal.yaml:/config.yaml
     - dex:/var/dex/
     env_file:
     - dev.env
