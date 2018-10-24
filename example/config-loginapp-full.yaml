@@ -23,5 +23,5 @@ log:
 web_output:
   main_client_id: "loginapp"
   main_username_claim: "email"
-  assets_dir: "../assets/"
+  assets_dir: "./assets/"
   skip_main_page: true

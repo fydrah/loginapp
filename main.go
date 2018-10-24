@@ -57,6 +57,7 @@ type KubeUserInfo struct {
 	Claims        interface{}
 	ClientSecret  string
 	UsernameClaim string
+	Name          string
 }
 
 // OAuth2Config generate oauth config
@@ -216,6 +217,7 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 		ClientSecret:  s.config.OIDC.Client.Secret,
 		ClientID:      s.config.WebOutput.MainClientID,
 		UsernameClaim: usernameClaim.(string),
+		Name:          s.config.Name,
 	}, nil
 }
 

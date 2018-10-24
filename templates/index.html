@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href=
+  "assets/css/form-style.min.css">
+  <script type="text/javascript">
+  function adjust_textarea(t){t.style.height="20px",t.style.height=t.scrollHeight+"px"}
+  </script>
+  <title>{{ .Name }}</title>
+</head>
+<body>
+  <form class="form-style-7" action="/login" method="post">
+    <h1>{{ .Name }}</h1>
+    <ul>
+      <li><label for="access">CLI access</label> <input name=
+      "access" type="submit" value="CLI"> <span>Login and retrieve
+      your kubeconfig for CLI authentication</span></li>
+    </ul>
+  </form>
+</body>
+</html>
