@@ -19,6 +19,7 @@ import (
 	"net/http"
 )
 
+// Routes setup the server router
 func (s *Server) Routes() {
 	if s.config.WebOutput.SkipMainPage {
 		s.router.GET("/", s.HandleLogin)
