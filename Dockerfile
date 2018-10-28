@@ -12,6 +12,7 @@ LABEL maintainer="Flavien Hardy <flav.hardy@gmail.com>"
 
 COPY --from=build /go/src/${REPO}/bin/loginapp-static /loginapp
 COPY --from=build /go/src/${REPO}/assets /assets
+COPY --from=build /go/src/${REPO}/templates /templates
 
 ENTRYPOINT ["/loginapp"]
 CMD [""]
