@@ -16,11 +16,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 type AppConfig struct {
@@ -55,6 +56,12 @@ type AppConfig struct {
 		AssetsDir         string `yaml:"assets_dir"`
 		SkipMainPage      bool   `yaml:"skip_main_page"`
 	} `yaml:"web_output"`
+	Template struct {
+		ClusterServer string `yaml:"cluster_server"`
+		ClusterCA     string `yaml:"cluster_ca"`
+		ClusterName   string `yaml:"cluster_name"`
+		ContextName   string `yaml:"context_name"`
+	} `yaml: "template"`
 }
 
 // appCheck struct

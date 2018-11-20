@@ -21,17 +21,21 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/cenkalti/backoff"
-	"github.com/coreos/go-oidc"
-	"github.com/julienschmidt/httprouter"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/cenkalti/backoff"
+	"github.com/coreos/go-oidc"
+	"github.com/julienschmidt/httprouter"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -41,12 +45,14 @@ var (
 // Server is the description
 // of loginapp web server
 type Server struct {
-	client   *http.Client
-	config   AppConfig
-	provider *oidc.Provider
-	router   *httprouter.Router
-	verifier *oidc.IDTokenVerifier
-	context  context.Context
+	client    *http.Client
+	config    AppConfig
+	provider  *oidc.Provider
+	router    *httprouter.Router
+	verifier  *oidc.IDTokenVerifier
+	context   context.Context
+	idpCA     string
+	clusterCA string
 }
 
 // KubeUserInfo contains all values
@@ -60,6 +66,12 @@ type KubeUserInfo struct {
 	ClientSecret  string
 	UsernameClaim string
 	Name          string
+	IDPCA         string
+
+	ClusterServer string
+	ClusterCA     string
+	ClusterName   string
+	ContextName   string
 }
 
 // OAuth2Config generate oauth config
@@ -211,6 +223,7 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 		return KubeUserInfo{}, fmt.Errorf(msg)
 	}
 	logger.Debugf("Token issued with claims: %v", jsonClaims)
+
 	return KubeUserInfo{
 		IDToken:       rawIDToken,
 		RefreshToken:  token.RefreshToken,
@@ -220,6 +233,11 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 		ClientID:      s.config.WebOutput.MainClientID,
 		UsernameClaim: usernameClaim.(string),
 		Name:          s.config.Name,
+		IDPCA:         s.idpCA,
+		ClusterServer: s.config.Template.ClusterServer,
+		ClusterCA:     s.clusterCA,
+		ClusterName:   s.config.Template.ClusterName,
+		ContextName:   s.config.Template.ContextName,
 	}, nil
 }
 
@@ -249,7 +267,19 @@ func (s *Server) Run() error {
 	)
 	// router setup
 	s.router = httprouter.New()
-	s.Routes()
+	if s.config.WebOutput.SkipMainPage {
+		s.router.GET("/", s.HandleLogin)
+		logger.Debug("routes loaded, skipping main page")
+	} else {
+		s.router.GET("/", s.HandleGetIndex)
+		s.router.POST("/login", s.HandleLogin)
+		logger.Debug("routes loaded, using main page")
+	}
+	s.router.GET("/callback", s.HandleGetCallback)
+	s.router.GET("/healthz", s.HandleGetHealthz)
+	s.router.ServeFiles("/assets/*filepath", http.Dir(s.config.WebOutput.AssetsDir))
+
+	s.router.Handler(http.MethodGet, "/metrics", promhttp.Handler())
 	// client setup
 	if s.client == nil {
 		client, err := httpClientForRootCAs(s.config.OIDC.Issuer.RootCA)
@@ -300,6 +330,22 @@ func (s *Server) Run() error {
 
 	s.provider = provider
 	s.verifier = provider.Verifier(&oidc.Config{ClientID: s.config.OIDC.Client.ID})
+
+	if s.config.OIDC.Issuer.RootCA != "" {
+		rootCABytes, err := ioutil.ReadFile(s.config.OIDC.Issuer.RootCA)
+		if err != nil {
+			return fmt.Errorf("failed to read root-ca: %v", err)
+		}
+		s.idpCA = base64.StdEncoding.EncodeToString(rootCABytes)
+	}
+
+	if s.config.Template.ClusterCA != "" {
+		clusterCABytes, err := ioutil.ReadFile(s.config.Template.ClusterCA)
+		if err != nil {
+			return fmt.Errorf("failed to read cluster-ca: %v", err)
+		}
+		s.clusterCA = base64.StdEncoding.EncodeToString(clusterCABytes)
+	}
 
 	// Run
 	if s.config.TLS.Enabled {

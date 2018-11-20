@@ -21,7 +21,23 @@
             "Copy" type="button" data-clipboard-target="#kubeconfig">
             </button>
             <pre><code class="language-yaml" id=
-            "kubeconfig">- name: {{ .UsernameClaim }}
+            "kubeconfig">{{- if ne .ClusterServer "" -}}
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: {{ .ClusterCA }}
+    server: {{ .ClusterServer }}
+  name: {{ .ClusterName }}
+contexts:
+- context:
+    cluster: {{ .ClusterName }}
+    user: {{ .UsernameClaim }}
+  name: {{ .ContextName }}
+kind: Config
+preferences: {}
+users:
+{{- end }}
+- name: {{ .UsernameClaim }}
   user:
     auth-provider:
       config:
@@ -31,6 +47,9 @@
 {{- if ne .RefreshToken "" }}
         client-secret: {{ .ClientSecret }}
         refresh-token: {{ .RefreshToken }}
+{{- end }}
+{{- if ne .IDPCA "" }}
+        idp-certificate-authority-data: {{ .IDPCA }}
 {{- end }}
       name: oidc</code></pre>
           </div>

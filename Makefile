@@ -1,7 +1,7 @@
 BINDIR			:= bin
 GOFLAGS			:=
-DOCKER_REPOSITORY	:= quay.io/fydrah/loginapp
-GIT_REPOSITORY		:= github.com/fydrah/loginapp
+DOCKER_REPOSITORY	:= devopyio/loginapp
+GIT_REPOSITORY		:= github.com/devopyio/loginapp
 GIT_COMMIT_ID		:= $(shell git log -n 1 --pretty=format:%h)
 GIT_TAG			:= $(shell git describe --tags)
 DOCKERFILES		:= dockerfiles
