@@ -35,6 +35,22 @@
       name: oidc</code></pre>
           </div>
         </li>
+        <li>
+          <label>or execute this in your shell</label>
+          <div class="code-box-copy">
+            <button class="code-box-copy__btn" title=
+            "Copy" type="button" data-clipboard-target="#kubectl">
+            </button>
+            <pre><code class="language-yaml" id=
+              "kubectl">kubectl config set-credentials {{ .UsernameClaim }} \
+    --auth-provider oidc \
+    --auth-provider-arg idp-issuer-url={{ .Claims.iss }} \
+    --auth-provider-arg client-id={{ .ClientID }} \
+    --auth-provider-arg id-token={{ .IDToken }} \
+    --auth-provider-arg client-secret={{ .ClientSecret }} \
+    --auth-provider-arg refresh-token={{ .RefreshToken }}</code></pre>
+          </div>
+        </li>
         <li><label>Return to login page</label> <input type=
         "submit" value="Home"></li>
       </ul>
