@@ -8,6 +8,8 @@
 
 Original source code from [coreos/dex repository](https://github.com/coreos/dex/tree/master/cmd/example-app)
 
+![Demo](./docs/images/loginapp.gif)
+
 ## Usage
 
 ```shell
