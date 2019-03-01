@@ -20,7 +20,7 @@ lint: $(LINTER)
 
 .PHONY: deps
 deps:
-	go get ./..
+	go get .
 
 .PHONY: test
 test:
