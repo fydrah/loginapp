@@ -1,21 +1,22 @@
 FROM golang:1-alpine AS build
-ARG REPO=github.com/devopy.io/loginapp
 
-RUN apk add --no-cache git build-base
+RUN apk update && apk add make git gcc musl-dev
+
+ADD . /go/src/github.com/devopyio/loginapp
+
+WORKDIR /go/src/github.com/devopyio/loginapp
+
 ENV GO111MODULE on
-COPY . /go/src/${REPO}
-WORKDIR /go/src/${REPO}
 RUN make build
 
 FROM alpine:latest
 
-#ARG REPO=github.com/devopy.io/loginapp
 RUN adduser app -u 1001 -g 1001 -s /bin/false -D rrac
 
-COPY --from=build loginapp /loginapp
-COPY --from=build assets /assets
-COPY --from=build templates /templates
-RUN chown app /loginapp && chown -R app /assets && chown -R app /templates
+COPY --from=build /go/src/github.com/devopyio/loginapp/loginapp /usr/bin/loginapp
+COPY --from=build /go/src/github.com/devopyio/loginapp/assets /assets
+COPY --from=build /go/src/github.com/devopyio/loginapp/templates /templates
+RUN chown app /usr/bin/loginapp && chown -R app /assets && chown -R app /templates
 
-ENTRYPOINT ["/loginapp"]
-CMD [""]
+USER app
+ENTRYPOINT ["/usr/bin/loginapp"]
