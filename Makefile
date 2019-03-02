@@ -26,7 +26,7 @@ deps:
 test:
 	go test $(TESTFLAGS) ./...
 
-.PHONY: build
+.PHONY: build deps
 build:
 	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-s -X main.version=$(GIT_HASH) -X main.date="$(DATE)" -X main.branch=$(BRANCH) -X main.revision=$(GIT_HASH) -X main.user=$(USER) -extldflags "-static"' .
 
