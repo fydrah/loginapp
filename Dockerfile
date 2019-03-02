@@ -9,7 +9,7 @@ RUN make build
 FROM scratch
 ARG REPO=github.com/devopy.io/loginapp
 
-COPY --from=build /go/src/${REPO}/bin/loginapp-static /loginapp
+COPY --from=build /go/src/${REPO}/bin/loginapp /loginapp
 COPY --from=build /go/src/${REPO}/assets /assets
 COPY --from=build /go/src/${REPO}/templates /templates
 
