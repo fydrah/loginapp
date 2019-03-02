@@ -1,55 +1,41 @@
-BINDIR			:= bin
-GOFLAGS			:=
-DOCKER_REPOSITORY	:= devopyio/loginapp
-GIT_REPOSITORY		:= github.com/devopyio/loginapp
-GIT_COMMIT_ID		:= $(shell git log -n 1 --pretty=format:%h)
-GIT_TAG			:= $(shell git describe --tags)
-DOCKERFILES		:= dockerfiles
-CYCLO_MAX		:= 15
-SRC_FILES		:= $(shell find . -name "*.go" -not -path "./vendor*")
+DATE := $(shell date +%FT%T%z)
+USER := $(shell whoami)
+GIT_HASH := $(shell git --no-pager describe --tags --always)
+BRANCH := $(shell git branch | grep \* | cut -d ' ' -f2)
+DOCKER_IMAGE := loginapp
 
-LDFLAGS			= -w -s -X main.GitVersion=$(GIT_TAG) -X main.GitHash=$(GIT_COMMIT_ID)
+LINT_FLAGS := run --deadline=120s
+LINTER := ./bin/golangci-lint
+TESTFLAGS := -v -cover
 
-.PHONY: all
-all: build
+GO111MODULE := on
+all: $(LINTER) deps test lint build
+
+$(LINTER):
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s v1.15.0
+
+.PHONY: lint
+lint: $(LINTER)
+	$(LINTER) $(LINT_FLAGS) ./...
+
+.PHONY: deps
+deps:
+	go get .
+
+.PHONY: test
+test:
+	go test $(TESTFLAGS) ./...
 
 .PHONY: build
 build:
-	go build -o $(BINDIR)/loginapp $(GOFLAGS) -ldflags '$(LDFLAGS)'
+	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-s -X main.version=$(GIT_HASH) -X main.date="$(DATE)" -X main.branch=$(BRANCH) -X main.revision=$(GIT_HASH) -X main.user=$(USER) -extldflags "-static"' .
 
-.PHONY: build-static
-build-static: LDFLAGS += -extldflags "-static"
-build-static:
-	CGO_ENABLED=0 go build -o $(BINDIR)/loginapp-static $(GOFLAGS) -ldflags '$(LDFLAGS)'
+docker-build:
+	docker build . -t $(DOCKER_IMAGE)
 
-.PHONY: docker-tmp
-docker-tmp:
-	docker build -t $(DOCKER_REPOSITORY):$(GIT_COMMIT_ID) .
+docker-login:
+	docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
 
-.PHONY: checks
-checks: errcheck gocyclo gosimple
-
-.PHONY: gofmt
-gofmt:
-	gofmt -w -s $(SRC_FILES)
-
-.PHONY: errcheck
-errcheck:
-	@echo
-	@echo "############ Run unchecked errors check"
-	which errcheck || go get github.com/kisielk/errcheck
-	errcheck $(GIT_REPOSITORY)
-
-.PHONY: gocyclo
-gocyclo:
-	@echo
-	@echo "############ Run cyclomatic complexity check"
-	which gocyclo || go get github.com/fzipp/gocyclo
-	gocyclo -over $(CYCLO_MAX) $(SRC_FILES)
-
-.PHONY: gosimple
-gosimple:
-	@echo
-	@echo "############ Run simplifying code check (codes reference at https://staticcheck.io/docs/gosimple)"
-	which gosimple || go get honnef.co/go/tools/cmd/gosimple
-	gosimple $(GIT_REPOSITORY)
+docker-push: docker-build docker-login
+	docker tag $(DOCKER_IMAGE) $(DOCKER_USERNAME)/$(DOCKER_IMAGE):$(GIT_HASH)
+	docker push $(DOCKER_USERNAME)/$(DOCKER_IMAGE):$(GIT_HASH)
