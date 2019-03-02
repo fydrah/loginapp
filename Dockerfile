@@ -2,6 +2,7 @@ FROM golang:1-alpine AS build
 ARG REPO=github.com/devopy.io/loginapp
 
 RUN apk add --no-cache git build-base
+ENV GO111MODULE on
 COPY . /go/src/${REPO}
 WORKDIR /go/src/${REPO}
 RUN make build
