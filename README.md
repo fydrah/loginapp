@@ -1,6 +1,9 @@
+[![Build Status](https://travis-ci.com/devopyio/loginapp.svg?branch=master)](https://travis-ci.com/devopyio/loginapp)
+[![Go Report Card](https://goreportcard.com/badge/github.com/devopyio/loginapp)](https://goreportcard.com/report/github.com/devopyio/loginapp)
+
 # Loginapp
 
-[![Docker Repository on Quay](https://quay.io/repository/fydrah/loginapp/status "Docker Repository on Quay")](https://quay.io/repository/fydrah/loginapp) [![codebeat badge](https://codebeat.co/badges/bb90084d-9b89-4af7-9a2c-150b7d4802da)](https://codebeat.co/projects/github-com-fydrah-loginapp-master) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/0689fc84adb844cab356a625625ef54c)](https://www.codacy.com/app/fydrah/loginapp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fydrah/loginapp&amp;utm_campaign=Badge_Grade) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffydrah%2Floginapp.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffydrah%2Floginapp?ref=badge_shield)
+[![Docker Repository on Quay](https://quay.io/repository/devopyio/loginapp/status "Docker Repository on Quay")](https://quay.io/repository/devopyio/loginapp) [![codebeat badge](https://codebeat.co/badges/bb90084d-9b89-4af7-9a2c-150b7d4802da)](https://codebeat.co/projects/github-com-devopyio-loginapp-master) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/0689fc84adb844cab356a625625ef54c)](https://www.codacy.com/app/devopyio/loginapp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=devopyio/loginapp&amp;utm_campaign=Badge_Grade) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdevopyio%2Floginapp.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdevopyio%2Floginapp?ref=badge_shield)
 
 
 
@@ -15,7 +18,7 @@ NAME:
     loginapp - Web application for Kubernetes CLI configuration with OIDC
 
 AUTHOR:
-    fydrah <flav.hardy@gmail.com>
+    devopyio <flav.hardy@gmail.com>
 
 USAGE:
     loginapp [global options] command [command options]

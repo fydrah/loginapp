@@ -61,7 +61,7 @@ type AppConfig struct {
 		ClusterCA     string `yaml:"cluster_ca"`
 		ClusterName   string `yaml:"cluster_name"`
 		ContextName   string `yaml:"context_name"`
-	} `yaml: "template"`
+	} `yaml:"template"`
 }
 
 // appCheck struct
