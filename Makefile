@@ -9,7 +9,7 @@ LINTER := ./bin/golangci-lint
 TESTFLAGS := -v -cover
 
 GO111MODULE := on
-all: $(LINTER) deps test lint build
+all: $(LINTER) deps test lint build docker-push
 
 $(LINTER):
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s v1.15.0
@@ -27,7 +27,7 @@ test:
 	go test $(TESTFLAGS) ./...
 
 .PHONY: build
-build:
+build: deps
 	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-s -X main.version=$(GIT_HASH) -X main.date="$(DATE)" -X main.branch=$(BRANCH) -X main.revision=$(GIT_HASH) -X main.user=$(USER) -extldflags "-static"' .
 
 docker-build:
