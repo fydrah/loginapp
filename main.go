@@ -80,6 +80,7 @@ func (s *Server) PrepareCallbackURL() string {
 	// Prepare scopes
 	var (
 		scopes      []string
+		extraAuthCodeOptions []oauth2.AuthCodeOption
 		authCodeURL string
 	)
 
@@ -93,10 +94,12 @@ func (s *Server) PrepareCallbackURL() string {
 	scopes = append(scopes, "openid", "profile", "email", "groups")
 	if *s.config.OIDC.OfflineAsScope {
 		scopes = append(scopes, "offline_access")
-		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
-	} else {
-		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
 	}
+	for p, v := range s.config.OIDC.ExtraAuthCodeOpts {
+		extraAuthCodeOptions = append(extraAuthCodeOptions, oauth2.SetAuthURLParam(p, v))
+	}
+	authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name, extraAuthCodeOptions...)
+	logger.Debugf("Auth code url: %s", authCodeURL)
 	logger.Debugf("Request token with the following scopes: %v", scopes)
 	return authCodeURL
 }

@@ -37,6 +37,7 @@ type AppConfig struct {
 			RootCA string `yaml:"root_ca"`
 		} `yaml:"issuer"`
 		ExtraScopes    []string `yaml:"extra_scopes"`
+		ExtraAuthCodeOpts map[string]string `yaml:"extra_auth_code_opts"`
 		OfflineAsScope *bool    `yaml:"offline_as_scope"`
 		CrossClients   []string `yaml:"cross_clients"`
 	} `yaml:"oidc"`
