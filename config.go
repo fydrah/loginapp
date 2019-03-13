@@ -36,9 +36,10 @@ type AppConfig struct {
 			URL    string `yaml:"url"`
 			RootCA string `yaml:"root_ca"`
 		} `yaml:"issuer"`
-		ExtraScopes    []string `yaml:"extra_scopes"`
-		OfflineAsScope *bool    `yaml:"offline_as_scope"`
-		CrossClients   []string `yaml:"cross_clients"`
+		ExtraScopes       []string          `yaml:"extra_scopes"`
+		ExtraAuthCodeOpts map[string]string `yaml:"extra_auth_code_opts"`
+		OfflineAsScope    *bool             `yaml:"offline_as_scope"`
+		CrossClients      []string          `yaml:"cross_clients"`
 	} `yaml:"oidc"`
 	TLS struct {
 		Enabled bool   `yaml:"enabled"`
@@ -94,7 +95,7 @@ func configLogger(format string, logLevel string) {
 		logger.Formatter = &logrus.TextFormatter{}
 	default:
 		logger.Formatter = &logrus.JSONFormatter{}
-		logger.Warningf("Format %q not available, use json|text. Using json format", f)
+		logger.Warningf("format %q not available, use json|text. Using json format", f)
 		format = "json"
 	}
 	logger.Debugf("Using %s log format", format)
@@ -109,7 +110,7 @@ func configLogger(format string, logLevel string) {
 		logger.Level = logrus.ErrorLevel
 	default:
 		logger.Level = logrus.InfoLevel
-		logger.Warningf("Log level %q not available, use debug|info|warning|error. Using Info log level", l)
+		logger.Warningf("log level %q not available, use debug|info|warning|error. Using Info log level", l)
 		logLevel = "info"
 	}
 	logger.Debugf("Using %s log level", logLevel)
@@ -122,12 +123,12 @@ func (a *AppConfig) Init(config string) error {
 	/*
 		Extract data from yaml configuration file
 	*/
-	logger.Debugf("Loading configuration file: %v", config)
+	logger.Debugf("loading configuration file: %v", config)
 	configData, err := ioutil.ReadFile(config)
 	if err != nil {
 		return fmt.Errorf("failed to read config file %s: %v", config, err)
 	}
-	logger.Debugf("Unmarshal data: %v", configData)
+	logger.Debugf("unmarshal data: %v", configData)
 	if err := yaml.Unmarshal(configData, &a); err != nil {
 		return fmt.Errorf("error parse config file %s: %v", config, err)
 	}

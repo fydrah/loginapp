@@ -25,6 +25,9 @@
   user:
     auth-provider:
       config:
+{{- range $k,$v := .ExtraAuthCodeOpts }}
+        {{ $k }}: "{{ $v }}"
+{{- end }}
         idp-issuer-url: {{ .Claims.iss }}
         client-id: {{ .ClientID }}
         id-token: {{ .IDToken }}
@@ -44,11 +47,16 @@
             <pre><code class="language-yaml" id=
               "kubectl">kubectl config set-credentials {{ .UsernameClaim }} \
     --auth-provider oidc \
+{{- range $k,$v := .ExtraAuthCodeOpts }}
+    --auth-provider-arg {{ $k }}={{ $v }} \
+{{- end }}
     --auth-provider-arg idp-issuer-url={{ .Claims.iss }} \
     --auth-provider-arg client-id={{ .ClientID }} \
     --auth-provider-arg id-token={{ .IDToken }} \
+{{- if ne .RefreshToken "" }}
     --auth-provider-arg client-secret={{ .ClientSecret }} \
-    --auth-provider-arg refresh-token={{ .RefreshToken }}</code></pre>
+    --auth-provider-arg refresh-token={{ .RefreshToken }}
+{{- end }}</code></pre>
           </div>
         </li>
         <li><label>Return to login page</label> <input type=

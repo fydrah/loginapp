@@ -63,6 +63,12 @@ oidc:
   # default: []
   extra_scopes:
     - groups
+  # Extra auth code options
+  # Some extra auth code options are required for ADFS compatibility (ex: resource).
+  # See: https://docs.microsoft.com/fr-fr/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers
+  # default: {}
+  extra_auth_code_opts:
+    resource: XXXXX
   # Enable offline scope
   # default: false
   offline_as_scope: true

@@ -56,8 +56,9 @@ func (s *Server) OAuth2Config(scopes []string) *oauth2.Config {
 func (s *Server) PrepareCallbackURL() string {
 	// Prepare scopes
 	var (
-		scopes      []string
-		authCodeURL string
+		scopes               []string
+		extraAuthCodeOptions []oauth2.AuthCodeOption
+		authCodeURL          string
 	)
 
 	scopes = append(scopes, s.config.OIDC.ExtraScopes...)
@@ -70,11 +71,13 @@ func (s *Server) PrepareCallbackURL() string {
 	scopes = append(scopes, "openid", "profile", "email", "groups")
 	if *s.config.OIDC.OfflineAsScope {
 		scopes = append(scopes, "offline_access")
-		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
-	} else {
-		authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name)
 	}
-	logger.Debugf("Request token with the following scopes: %v", scopes)
+	for p, v := range s.config.OIDC.ExtraAuthCodeOpts {
+		extraAuthCodeOptions = append(extraAuthCodeOptions, oauth2.SetAuthURLParam(p, v))
+	}
+	authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name, extraAuthCodeOptions...)
+	logger.Debugf("auth code url: %s", authCodeURL)
+	logger.Debugf("request token with the following scopes: %v", scopes)
 	return authCodeURL
 }
 
@@ -120,7 +123,7 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 	}
 	idToken, err := s.verifier.Verify(r.Context(), rawIDToken)
 	if err != nil {
-		msg := fmt.Sprintf("Failed to verify ID token: %v", err)
+		msg := fmt.Sprintf("failed to verify ID token: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return KubeUserInfo{}, fmt.Errorf(msg)
 	}
@@ -137,20 +140,21 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 	}
 	var usernameClaim interface{}
 	if usernameClaim = jsonClaims[s.config.WebOutput.MainUsernameClaim]; usernameClaim == nil {
-		msg := fmt.Sprintf("Failed to find a claim matching the main_username_claim '%v'", s.config.WebOutput.MainUsernameClaim)
+		msg := fmt.Sprintf("failed to find a claim matching the main_username_claim '%v'", s.config.WebOutput.MainUsernameClaim)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return KubeUserInfo{}, fmt.Errorf(msg)
 	}
-	logger.Debugf("Token issued with claims: %v", jsonClaims)
+	logger.Debugf("token issued with claims: %v", jsonClaims)
 	return KubeUserInfo{
-		IDToken:       rawIDToken,
-		RefreshToken:  token.RefreshToken,
-		RedirectURL:   oauth2Config.RedirectURL,
-		Claims:        jsonClaims,
-		ClientSecret:  s.config.OIDC.Client.Secret,
-		ClientID:      s.config.WebOutput.MainClientID,
-		UsernameClaim: usernameClaim.(string),
-		Name:          s.config.Name,
+		IDToken:           rawIDToken,
+		RefreshToken:      token.RefreshToken,
+		RedirectURL:       oauth2Config.RedirectURL,
+		Claims:            jsonClaims,
+		ClientSecret:      s.config.OIDC.Client.Secret,
+		ClientID:          s.config.WebOutput.MainClientID,
+		UsernameClaim:     usernameClaim.(string),
+		Name:              s.config.Name,
+		ExtraAuthCodeOpts: s.config.OIDC.ExtraAuthCodeOpts,
 	}, nil
 }
 
@@ -176,7 +180,7 @@ func (s *Server) Run() error {
 	s.context = oidc.ClientContext(context.Background(), s.client)
 	setupProvider := func() error {
 		if provider, backoffErr = oidc.NewProvider(s.context, s.config.OIDC.Issuer.URL); backoffErr != nil {
-			logger.Errorf("Failed to query provider %q: %v", s.config.OIDC.Issuer.URL, backoffErr)
+			logger.Errorf("failed to query provider %q: %v", s.config.OIDC.Issuer.URL, backoffErr)
 			return backoffErr
 		}
 		return nil

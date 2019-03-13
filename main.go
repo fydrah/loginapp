@@ -30,14 +30,15 @@ var (
 // KubeUserInfo contains all values
 // needed by a user for OIDC authentication
 type KubeUserInfo struct {
-	ClientID      string
-	IDToken       string
-	RefreshToken  string
-	RedirectURL   string
-	Claims        interface{}
-	ClientSecret  string
-	UsernameClaim string
-	Name          string
+	ClientID          string
+	IDToken           string
+	RefreshToken      string
+	RedirectURL       string
+	ExtraAuthCodeOpts interface{}
+	Claims            interface{}
+	ClientSecret      string
+	UsernameClaim     string
+	Name              string
 }
 
 func main() {
