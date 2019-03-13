@@ -102,6 +102,12 @@ web_output:
   # Skip main page of login app
   # default: false
   skip_main_page: false
+# Prometheus exporter configuration
+prometheus:
+  # Port to use. Metrics are available at
+  # http://IP:PORT/metrics
+  # default: 9090
+  port: 9090
 ```
 
 Two main examples are available:

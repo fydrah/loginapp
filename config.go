@@ -55,6 +55,9 @@ type AppConfig struct {
 		AssetsDir         string `yaml:"assets_dir"`
 		SkipMainPage      bool   `yaml:"skip_main_page"`
 	} `yaml:"web_output"`
+	Prometheus struct {
+		Port int `yaml:"port"`
+	} `yaml:"prometheus"`
 }
 
 // appCheck struct
@@ -158,7 +161,7 @@ func (a *AppConfig) Init(config string) error {
 		{a.TLS.Enabled && a.TLS.Key == "", "no tls key specified", nil},
 	}
 	if check(errorChecks) {
-		return fmt.Errorf("Error while loading configuration")
+		return fmt.Errorf("error while loading configuration")
 	}
 	/*
 		Default checks: list of check which make loginapp setup a default value
@@ -176,6 +179,9 @@ func (a *AppConfig) Init(config string) error {
 		}},
 		{a.WebOutput.MainUsernameClaim == "", "no output main_username_claim specified, using default: 'name'", func() {
 			a.WebOutput.MainUsernameClaim = "name"
+		}},
+		{a.Prometheus.Port == 0, "no prometheus scrap port setup, using default: 9090", func() {
+			a.Prometheus.Port = 9090
 		}},
 	}
 	_ = check(defaultChecks)
