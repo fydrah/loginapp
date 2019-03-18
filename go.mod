@@ -14,7 +14,7 @@ require (
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v0.9.1
 	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect
-	github.com/prometheus/common v0.0.0-20181119215939-b36ad289a3ea // indirect
+	github.com/prometheus/common v0.0.0-20181119215939-b36ad289a3ea
 	github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d // indirect
 	github.com/sirupsen/logrus v1.0.5
 	github.com/stretchr/testify v1.3.0 // indirect

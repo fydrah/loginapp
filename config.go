@@ -20,6 +20,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/version"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -123,6 +125,7 @@ func configLogger(format string, logLevel string) {
 // setup logger and run
 // error/warning checks
 func (a *AppConfig) Init(config string) error {
+	prometheus.MustRegister(version.NewCollector("loginapp"))
 	/*
 		Extract data from yaml configuration file
 	*/

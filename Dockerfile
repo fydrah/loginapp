@@ -11,7 +11,7 @@ RUN make build
 
 FROM alpine:latest
 
-RUN adduser app -u 1001 -g 1001 -s /bin/false -D rrac
+RUN adduser app -u 1001 -g 1001 -s /bin/false -D app
 
 COPY --from=build /go/src/github.com/devopyio/loginapp/loginapp /usr/bin/loginapp
 COPY --from=build /go/src/github.com/devopyio/loginapp/assets /assets

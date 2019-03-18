@@ -17,14 +17,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli"
-)
 
-var (
-	// GitVersion returns latest tag
-	GitVersion = "X.X.X"
-	// GitHash return hash of latest commit
-	GitHash = "XXXXXXX"
+	"github.com/prometheus/common/version"
+	"github.com/urfave/cli"
 )
 
 // NewCli configure loginapp CLI
@@ -47,7 +42,7 @@ GLOBAL OPTIONS:
     {{end}}{{end}}
 `
 	app.UsageText = "Web application for Kubernetes CLI configuration with OIDC"
-	app.Version = fmt.Sprintf("%v build %v", GitVersion, GitHash)
+	app.Version = version.Print("loginapp")
 	app.Authors = []cli.Author{
 		{
 			Name:  "fydrah",
