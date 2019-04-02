@@ -27,18 +27,11 @@ docker-tmp:
 	docker build -t $(DOCKER_REPOSITORY):$(GIT_COMMIT_ID) .
 
 .PHONY: checks
-checks: errcheck gocyclo gosimple
+checks: gocyclo staticcheck
 
 .PHONY: gofmt
 gofmt:
-	gofmt -w -s $(SRC_FILES)
-
-.PHONY: errcheck
-errcheck:
-	@echo
-	@echo "############ Run unchecked errors check"
-	which errcheck || go get github.com/kisielk/errcheck
-	errcheck $(GIT_REPOSITORY)
+	go fmt ./...
 
 .PHONY: gocyclo
 gocyclo:
@@ -47,9 +40,9 @@ gocyclo:
 	which gocyclo || go get github.com/fzipp/gocyclo
 	gocyclo -over $(CYCLO_MAX) $(SRC_FILES)
 
-.PHONY: gosimple
-gosimple:
+.PHONY: staticcheck
+staticcheck:
 	@echo
-	@echo "############ Run simplifying code check (codes reference at https://staticcheck.io/docs/gosimple)"
-	which gosimple || go get honnef.co/go/tools/cmd/gosimple
-	gosimple $(GIT_REPOSITORY)
+	@echo "############ Run simplifying code check (codes reference at https://staticcheck.io/docs/checks)"
+	which staticcheck || go get honnef.co/go/tools/cmd/staticcheck
+	staticcheck ./...

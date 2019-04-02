@@ -15,6 +15,7 @@
 package main
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 )
 
@@ -31,4 +32,9 @@ func (s *Server) Routes() {
 	s.router.GET("/callback", s.HandleGetCallback)
 	s.router.GET("/healthz", s.HandleGetHealthz)
 	s.router.ServeFiles("/assets/*filepath", http.Dir(s.config.WebOutput.AssetsDir))
+}
+
+// PrometheusRoutes setup the prometheus router
+func (s *Server) PromertheusRoutes() {
+	s.promrouter.Handler("GET", "/metrics", promhttp.Handler())
 }

@@ -36,9 +36,10 @@ type AppConfig struct {
 			URL    string `yaml:"url"`
 			RootCA string `yaml:"root_ca"`
 		} `yaml:"issuer"`
-		ExtraScopes    []string `yaml:"extra_scopes"`
-		OfflineAsScope *bool    `yaml:"offline_as_scope"`
-		CrossClients   []string `yaml:"cross_clients"`
+		ExtraScopes       []string          `yaml:"extra_scopes"`
+		ExtraAuthCodeOpts map[string]string `yaml:"extra_auth_code_opts"`
+		OfflineAsScope    *bool             `yaml:"offline_as_scope"`
+		CrossClients      []string          `yaml:"cross_clients"`
 	} `yaml:"oidc"`
 	TLS struct {
 		Enabled bool   `yaml:"enabled"`
@@ -55,6 +56,9 @@ type AppConfig struct {
 		AssetsDir         string `yaml:"assets_dir"`
 		SkipMainPage      bool   `yaml:"skip_main_page"`
 	} `yaml:"web_output"`
+	Prometheus struct {
+		Port int `yaml:"port"`
+	} `yaml:"prometheus"`
 }
 
 // appCheck struct
@@ -91,7 +95,7 @@ func configLogger(format string, logLevel string) {
 		logger.Formatter = &logrus.TextFormatter{}
 	default:
 		logger.Formatter = &logrus.JSONFormatter{}
-		logger.Warningf("Format %q not available, use json|text. Using json format", f)
+		logger.Warningf("format %q not available, use json|text. Using json format", f)
 		format = "json"
 	}
 	logger.Debugf("Using %s log format", format)
@@ -106,7 +110,7 @@ func configLogger(format string, logLevel string) {
 		logger.Level = logrus.ErrorLevel
 	default:
 		logger.Level = logrus.InfoLevel
-		logger.Warningf("Log level %q not available, use debug|info|warning|error. Using Info log level", l)
+		logger.Warningf("log level %q not available, use debug|info|warning|error. Using Info log level", l)
 		logLevel = "info"
 	}
 	logger.Debugf("Using %s log level", logLevel)
@@ -119,12 +123,12 @@ func (a *AppConfig) Init(config string) error {
 	/*
 		Extract data from yaml configuration file
 	*/
-	logger.Debugf("Loading configuration file: %v", config)
+	logger.Debugf("loading configuration file: %v", config)
 	configData, err := ioutil.ReadFile(config)
 	if err != nil {
 		return fmt.Errorf("failed to read config file %s: %v", config, err)
 	}
-	logger.Debugf("Unmarshal data: %v", configData)
+	logger.Debugf("unmarshal data: %v", configData)
 	if err := yaml.Unmarshal(configData, &a); err != nil {
 		return fmt.Errorf("error parse config file %s: %v", config, err)
 	}
@@ -158,7 +162,7 @@ func (a *AppConfig) Init(config string) error {
 		{a.TLS.Enabled && a.TLS.Key == "", "no tls key specified", nil},
 	}
 	if check(errorChecks) {
-		return fmt.Errorf("Error while loading configuration")
+		return fmt.Errorf("error while loading configuration")
 	}
 	/*
 		Default checks: list of check which make loginapp setup a default value
@@ -176,6 +180,9 @@ func (a *AppConfig) Init(config string) error {
 		}},
 		{a.WebOutput.MainUsernameClaim == "", "no output main_username_claim specified, using default: 'name'", func() {
 			a.WebOutput.MainUsernameClaim = "name"
+		}},
+		{a.Prometheus.Port == 0, "no prometheus scrap port setup, using default: 9090", func() {
+			a.Prometheus.Port = 9090
 		}},
 	}
 	_ = check(defaultChecks)

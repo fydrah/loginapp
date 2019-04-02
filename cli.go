@@ -66,9 +66,9 @@ GLOBAL OPTIONS:
 			Action: func(c *cli.Context) error {
 				if len(c.Args()) == 0 {
 					if err := cli.ShowCommandHelp(c, c.Command.Name); err != nil {
-						return fmt.Errorf("Error while rendering command help: %v", err)
+						return fmt.Errorf("error while rendering command help: %v", err)
 					}
-					return fmt.Errorf("Missing argument")
+					return fmt.Errorf("missing argument")
 				}
 				s := &Server{}
 				if err := s.config.Init(c.Args().First()); err != nil {
