@@ -21,12 +21,6 @@ import (
 	"strings"
 )
 
-// HandleGetIndex serves
-// requests to index.html page
-func (s *Server) HandleGetIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	renderTemplate(w, indexTmpl, s.config)
-}
-
 // HandleGetHealthz serves
 // healthchecks requests (mainly
 // used by kubernetes healthchecks)

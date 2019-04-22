@@ -14,21 +14,10 @@
 
 package main
 
-import (
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
-)
-
-// Routes setup the server router
-func (s *Server) Routes() {
-	s.router.GET("/", s.HandleLogin)
-	s.router.GET("/callback", s.HandleGetCallback)
-	s.router.GET("/healthz", s.HandleGetHealthz)
-	s.router.ServeFiles("/assets/*filepath", http.Dir(s.config.WebOutput.AssetsDir))
-	logger.Debug("routes loaded")
-}
-
-// PrometheusRoutes setup the prometheus router
-func (s *Server) PromertheusRoutes() {
-	s.promrouter.Handler("GET", "/metrics", promhttp.Handler())
+// Cluster describes a kubernetes cluster
+type Cluster struct {
+	Name                  string `yaml:"name"`
+	Server                string `yaml:"server"`
+	InsecureSkipTLSVerify bool   `yaml:"insecure-skip-tls-verify"`
+	CertificateAuthority  string `yaml:"certificate-authority"`
 }

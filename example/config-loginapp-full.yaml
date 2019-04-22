@@ -24,4 +24,14 @@ web_output:
   main_client_id: "loginapp"
   main_username_claim: "email"
   assets_dir: "./assets/"
-  skip_main_page: true
+  skip_main_page: false
+clusters:
+  - name: myfakecluster
+    server: https://myfakecluster.org
+    certificate-authority: |
+      -----BEGIN CERTIFICATE-----
+      MIIC/zCCAeegAwIBAgIULkYvGJPRl50tMoVE4BNM0laRQncwDQYJKoZIhvcNAQEL
+      BQAwDzENMAsGA1UEAwwEbXljYTAeFw0xOTAyMTgyMjA5NTJaFw0xOTAyMjgyMjA5
+      NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      -----END CERTIFICATE-----
+    insecure-skip-tls-verify: false
