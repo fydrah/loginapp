@@ -22,4 +22,3 @@ log:
   format: json
 web_output:
   main_client_id: titi
-  skip_main_page: false

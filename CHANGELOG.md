@@ -6,9 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Custom copy/paste fields (ex: `kubectl config set-cluster [...]`)
 - More prometheus exports
-- UX improvements
+- More UX improvements
+
+## [2.7.0] - 2019-04-22
+### Added
+- Custom copy/paste fields (ex: `kubectl config set-cluster [...]`). Your can now setup clusters configuration:
+  ```
+  clusters:
+    - name: mycluster
+      server: https://mycluster.org
+      certificate-authority: |
+        -----BEGIN CERTIFICATE-----
+        MIIC/zCCAeegAwIBAgIULkYvGJPRl50tMoVE4BNM0laRQncwDQYJKoZIhvcNAQEL
+        BQAwDzENMAsGA1UEAwwEbXljYTAeFw0xOTAyMTgyMjA5NTJaFw0xOTAyMjgyMjA5
+        NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+        -----END CERTIFICATE-----
+  ```
+
+- UX improvements, css/js has been changed for [bootstrap](https://getbootstrap.com/)
+
+### Removed
+- `web_output.skip_main_page` does not longer exists, the index page was
+  useless
 
 ## [2.6.0] - 2019-04-02
 ### Added

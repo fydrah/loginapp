@@ -107,13 +107,23 @@ web_output:
   assets_dir: /assets
   # Skip main page of login app
   # default: false
-  skip_main_page: false
 # Prometheus exporter configuration
 prometheus:
   # Port to use. Metrics are available at
   # http://IP:PORT/metrics
   # default: 9090
   port: 9090
+# Clusters list for CLI configuration
+clusters:
+  - name: mycluster
+    server: https://mycluster.org
+    certificate-authority: |
+      -----BEGIN CERTIFICATE-----
+      MIIC/zCCAeegAwIBAgIULkYvGJPRl50tMoVE4BNM0laRQncwDQYJKoZIhvcNAQEL
+      BQAwDzENMAsGA1UEAwwEbXljYTAeFw0xOTAyMTgyMjA5NTJaFw0xOTAyMjgyMjA5
+      NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      -----END CERTIFICATE-----
+    insecure-skip-tls-verify: false
 ```
 
 Two main examples are available:

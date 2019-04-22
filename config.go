@@ -54,11 +54,11 @@ type AppConfig struct {
 		MainUsernameClaim string `yaml:"main_username_claim"`
 		MainClientID      string `yaml:"main_client_id"`
 		AssetsDir         string `yaml:"assets_dir"`
-		SkipMainPage      bool   `yaml:"skip_main_page"`
 	} `yaml:"web_output"`
 	Prometheus struct {
 		Port int `yaml:"port"`
 	} `yaml:"prometheus"`
+	Clusters []Cluster `yaml:"clusters"`
 }
 
 // appCheck struct
@@ -165,10 +165,10 @@ func (a *AppConfig) Init(config string) error {
 		return fmt.Errorf("error while loading configuration")
 	}
 	/*
-		Default checks: list of check which make loginapp setup a default value
+		Default checks: list of checks which makes loginapp setup default values
 
 		Even if logger report this as an error log, this is not handle as an error.
-		Hope the following issue will be merged to use loglevel as a parameter:
+		This issue could help to use loglevel as a parameter once merged:
 		https://github.com/sirupsen/logrus/issues/646
 	*/
 	defaultChecks := []appCheck{

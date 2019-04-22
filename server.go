@@ -146,15 +146,12 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 	}
 	logger.Debugf("token issued with claims: %v", jsonClaims)
 	return KubeUserInfo{
-		IDToken:           rawIDToken,
-		RefreshToken:      token.RefreshToken,
-		RedirectURL:       oauth2Config.RedirectURL,
-		Claims:            jsonClaims,
-		ClientSecret:      s.config.OIDC.Client.Secret,
-		ClientID:          s.config.WebOutput.MainClientID,
-		UsernameClaim:     usernameClaim.(string),
-		Name:              s.config.Name,
-		ExtraAuthCodeOpts: s.config.OIDC.ExtraAuthCodeOpts,
+		IDToken:       rawIDToken,
+		RefreshToken:  token.RefreshToken,
+		RedirectURL:   oauth2Config.RedirectURL,
+		Claims:        jsonClaims,
+		UsernameClaim: usernameClaim.(string),
+		AppConfig:     s.config,
 	}, nil
 }
 

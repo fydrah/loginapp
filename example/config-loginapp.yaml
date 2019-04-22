@@ -20,5 +20,3 @@ tls:
 log:
   level: Debug
   format: json
-web_output:
-  skip_main_page: true

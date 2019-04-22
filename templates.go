@@ -17,7 +17,6 @@ package main
 
 import (
 	"html/template"
-	"log"
 	"net/http"
 )
 
@@ -26,11 +25,11 @@ func renderTemplate(w http.ResponseWriter, tmpl *template.Template, data interfa
 	if err == nil {
 		return
 	}
-
+	logger.Debugf("data: %v", data)
 	switch err := err.(type) {
 	case *template.Error:
 		// An ExecError guarantees that Execute has not written to the underlying reader.
-		log.Printf("error rendering template %s: %s", tmpl.Name(), err)
+		logger.Errorf("error rendering template %s: %s", tmpl.Name(), err)
 
 		// TODO(ericchiang): replace with better internal server error.
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -40,5 +39,4 @@ func renderTemplate(w http.ResponseWriter, tmpl *template.Template, data interfa
 	}
 }
 
-var indexTmpl = template.Must(template.ParseFiles("templates/index.html"))
 var tokenTmpl = template.Must(template.ParseFiles("templates/token.html"))
