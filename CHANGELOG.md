@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - More prometheus exports
 - More UX improvements
+- Documentation
+
+## [2.X.X] - Unreleased
+### Changed
+- Refactor directory structure to follow standards
+
+  See: https://github.com/golang-standards/project-layout
 
 ## [2.7.0] - 2019-04-22
 ### Added
