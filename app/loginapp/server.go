@@ -13,7 +13,7 @@
 // limitations under the License.
 // Some code comes from @ericchiang (Dex - CoreOS)
 
-package main
+package loginapp
 
 import (
 	"bytes"
@@ -23,7 +23,9 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
 	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
+	"html/template"
 	"net/http"
 )
 
@@ -76,8 +78,8 @@ func (s *Server) PrepareCallbackURL() string {
 		extraAuthCodeOptions = append(extraAuthCodeOptions, oauth2.SetAuthURLParam(p, v))
 	}
 	authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name, extraAuthCodeOptions...)
-	logger.Debugf("auth code url: %s", authCodeURL)
-	logger.Debugf("request token with the following scopes: %v", scopes)
+	log.Debugf("auth code url: %s", authCodeURL)
+	log.Debugf("request token with the following scopes: %v", scopes)
 	return authCodeURL
 }
 
@@ -144,7 +146,7 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 		http.Error(w, msg, http.StatusInternalServerError)
 		return KubeUserInfo{}, fmt.Errorf(msg)
 	}
-	logger.Debugf("token issued with claims: %v", jsonClaims)
+	log.Debugf("token issued with claims: %v", jsonClaims)
 	return KubeUserInfo{
 		IDToken:       rawIDToken,
 		RefreshToken:  token.RefreshToken,
@@ -153,6 +155,25 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 		UsernameClaim: usernameClaim.(string),
 		AppConfig:     s.config,
 	}, nil
+}
+
+// RenderTemplate renders
+// go-template formatted html page
+func (s *Server) RenderTemplate(w http.ResponseWriter, tmpl *template.Template, data interface{}) {
+	err := tmpl.Execute(w, data)
+	if err == nil {
+		return
+	}
+	log.Debugf("data: %v", data)
+	switch err := err.(type) {
+	case *template.Error:
+		log.Errorf("error rendering template %s: %s", tmpl.Name(), err)
+
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	default:
+		// An error with the underlying write, such as the connection being
+		// dropped. Ignore for now.
+	}
 }
 
 // Run launch app
@@ -177,7 +198,7 @@ func (s *Server) Run() error {
 	s.context = oidc.ClientContext(context.Background(), s.client)
 	setupProvider := func() error {
 		if provider, backoffErr = oidc.NewProvider(s.context, s.config.OIDC.Issuer.URL); backoffErr != nil {
-			logger.Errorf("failed to query provider %q: %v", s.config.OIDC.Issuer.URL, backoffErr)
+			log.Errorf("failed to query provider %q: %v", s.config.OIDC.Issuer.URL, backoffErr)
 			return backoffErr
 		}
 		return nil
@@ -216,17 +237,17 @@ func (s *Server) Run() error {
 	s.verifier = provider.Verifier(&oidc.Config{ClientID: s.config.OIDC.Client.ID})
 
 	// Start prometheus metric exporter
-	logger.Infof("export metric on http://0.0.0.0:%v", s.config.Prometheus.Port)
+	log.Infof("export metric on http://0.0.0.0:%v", s.config.Prometheus.Port)
 	go PrometheusMetrics(s.config.Prometheus.Port)
 
 	// Run
 	if s.config.TLS.Enabled {
-		logger.Infof("listening on https://%s", s.config.Listen)
+		log.Infof("listening on https://%s", s.config.Listen)
 		if err := fmt.Errorf("%v", http.ListenAndServeTLS(s.config.Listen, s.config.TLS.Cert, s.config.TLS.Key, LoggingHandler(s.router))); err != nil {
 			return err
 		}
 	} else {
-		logger.Infof("listening on http://%s", s.config.Listen)
+		log.Infof("listening on http://%s", s.config.Listen)
 		if err := fmt.Errorf("%v", http.ListenAndServe(s.config.Listen, LoggingHandler(s.router))); err != nil {
 			return err
 		}

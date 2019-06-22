@@ -13,10 +13,10 @@
 // limitations under the License.
 // Some code comes from @ericchiang (Dex - CoreOS)
 
-package main
+package loginapp
 
 import (
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 )
@@ -43,7 +43,7 @@ func LoggingHandler(next http.Handler) http.Handler {
 		t1 := time.Now()
 		next.ServeHTTP(lw, r)
 		t2 := time.Now()
-		logger.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"method":           r.Method,
 			"path":             r.URL.String(),
 			"request_duration": t2.Sub(t1).String(),

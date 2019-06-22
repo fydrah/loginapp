@@ -1,30 +1,43 @@
-BINDIR			:= bin
-GOFLAGS			:=
-DOCKER_REPOSITORY	:= quay.io/fydrah/loginapp
+# Dirs
+BINDIR				:= build/bin
+CMDDIR				:= cmd
+
+# Git
 GIT_REPOSITORY		:= github.com/fydrah/loginapp
 GIT_COMMIT_ID		:= $(shell git log -n 1 --pretty=format:%h)
-GIT_TAG			:= $(shell git describe --tags)
-DOCKERFILES		:= dockerfiles
-CYCLO_MAX		:= 15
-SRC_FILES		:= $(shell find . -name "*.go" -not -path "./vendor*")
+GIT_TAG				:= $(shell git describe --tags)
 
-LDFLAGS			= -w -s -X main.GitVersion=$(GIT_TAG) -X main.GitHash=$(GIT_COMMIT_ID)
+# Go
+GOFLAGS				:=
+LDFLAGS				= -w -s -X main.GitVersion=$(GIT_TAG) -X main.GitHash=$(GIT_COMMIT_ID)
+
+# Docker
+DOCKERFILE			:= build/docker/Dockerfile
+DOCKER_REPOSITORY	:= quay.io/fydrah/loginapp
+DOCKER_BUILD		:= docker build -f build/docker/Dockerfile .
+
+# Tests
+CYCLO_MAX			:= 15
+
+# Others
+SRC_FILES			:= $(shell find . -name "*.go" -not -path "./vendor*")
+
 
 .PHONY: all
 all: build
 
 .PHONY: build
 build:
-	go build -o $(BINDIR)/loginapp $(GOFLAGS) -ldflags '$(LDFLAGS)'
+	go build -o $(BINDIR)/loginapp $(GOFLAGS) -ldflags '$(LDFLAGS)' $(GIT_REPOSITORY)/$(CMDDIR)/loginapp
 
 .PHONY: build-static
 build-static: LDFLAGS += -extldflags "-static"
 build-static:
-	CGO_ENABLED=0 go build -o $(BINDIR)/loginapp-static $(GOFLAGS) -ldflags '$(LDFLAGS)'
+	CGO_ENABLED=0 go build -o $(BINDIR)/loginapp-static $(GOFLAGS) -ldflags '$(LDFLAGS)' $(GIT_REPOSITORY)/$(CMDDIR)/loginapp
 
 .PHONY: docker-tmp
 docker-tmp:
-	docker build -t $(DOCKER_REPOSITORY):$(GIT_COMMIT_ID) .
+	$(DOCKER_BUILD) -t $(DOCKER_REPOSITORY):$(GIT_COMMIT_ID)
 
 .PHONY: checks
 checks: gocyclo staticcheck

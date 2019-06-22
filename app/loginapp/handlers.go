@@ -13,10 +13,13 @@
 // limitations under the License.
 // Some code comes from @ericchiang (Dex - CoreOS)
 
-package main
+package loginapp
 
 import (
+	"fmt"
 	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
+	"html/template"
 	"net/http"
 	"strings"
 )
@@ -28,7 +31,7 @@ import (
 func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Check if provider is setup
 	if s.provider == nil {
-		logger.Debug("provider is not yet setup or unavailable")
+		log.Debug("provider is not yet setup or unavailable")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
@@ -36,7 +39,7 @@ func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ http
 	wellKnown := strings.TrimSuffix(s.config.OIDC.Issuer.URL, "/") + "/.well-known/openid-configuration"
 	_, err := s.client.Head(wellKnown)
 	if err != nil {
-		logger.Debugf("error while checking provider access: %v", err)
+		log.Debugf("error while checking provider access: %v", err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
@@ -55,8 +58,9 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	kc, err := s.ProcessCallback(w, r)
 	if err != nil {
-		logger.Errorf("error handling cli callback: %v", err)
+		log.Errorf("error handling cli callback: %v", err)
 		return
 	}
-	renderTemplate(w, tokenTmpl, kc)
+	var tokenTmpl = template.Must(template.ParseFiles(fmt.Sprintf("%v/token.html", s.config.WebOutput.TemplatesDir)))
+	s.RenderTemplate(w, tokenTmpl, kc)
 }

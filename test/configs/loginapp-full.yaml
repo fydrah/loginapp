@@ -6,7 +6,7 @@ oidc:
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
     redirect_url: "https://127.0.0.1:5555/callback"
   issuer:
-    root_ca: "example/ssl/ca.pem"
+    root_ca: "scripts/ssl/ca.pem"
     url: "https://dex.example.com:5556"
   extra_scopes:
     - groups
@@ -15,15 +15,16 @@ oidc:
   - web
 tls:
   enabled: true
-  cert: example/ssl/cert.pem
-  key: example/ssl/key.pem
+  cert: scripts/ssl/cert.pem
+  key: scripts/ssl/key.pem
 log:
   level: Debug
   format: json
 web_output:
   main_client_id: "loginapp"
   main_username_claim: "email"
-  assets_dir: "./assets/"
+  assets_dir: "./web/assets"
+  templates_dir: "./web/templates"
   skip_main_page: false
 clusters:
   - name: myfakecluster
