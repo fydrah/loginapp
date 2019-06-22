@@ -13,7 +13,7 @@
 // limitations under the License.
 // Some code comes from @ericchiang (Dex - CoreOS)
 
-package main
+package loginapp
 
 import (
 	"fmt"

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package loginapp
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -54,6 +54,7 @@ type AppConfig struct {
 		MainUsernameClaim string `yaml:"main_username_claim"`
 		MainClientID      string `yaml:"main_client_id"`
 		AssetsDir         string `yaml:"assets_dir"`
+		TemplatesDir      string `yaml:"templates_dir"`
 	} `yaml:"web_output"`
 	Prometheus struct {
 		Port int `yaml:"port"`
@@ -75,7 +76,7 @@ func check(checks []appCheck) bool {
 	checkFailed := false
 	for _, c := range checks {
 		if c.Condition {
-			logger.Error(c.Message)
+			log.Error(c.Message)
 			checkFailed = true
 			if c.DefaultAction != nil {
 				c.DefaultAction()
@@ -90,30 +91,30 @@ func check(checks []appCheck) bool {
 func configLogger(format string, logLevel string) {
 	switch f := format; f {
 	case "json":
-		logger.Formatter = &logrus.JSONFormatter{}
+		log.SetFormatter(&log.JSONFormatter{})
 	case "text":
-		logger.Formatter = &logrus.TextFormatter{}
+		log.SetFormatter(&log.TextFormatter{})
 	default:
-		logger.Formatter = &logrus.JSONFormatter{}
-		logger.Warningf("format %q not available, use json|text. Using json format", f)
+		log.SetFormatter(&log.JSONFormatter{})
+		log.Warningf("format %q not available, use json|text. Using json format", f)
 		format = "json"
 	}
-	logger.Debugf("Using %s log format", format)
+	log.Debugf("Using %s log format", format)
 	switch l := logLevel; l {
 	case "debug":
-		logger.Level = logrus.DebugLevel
+		log.SetLevel(log.DebugLevel)
 	case "info":
-		logger.Level = logrus.InfoLevel
+		log.SetLevel(log.InfoLevel)
 	case "warning":
-		logger.Level = logrus.WarnLevel
+		log.SetLevel(log.WarnLevel)
 	case "error":
-		logger.Level = logrus.ErrorLevel
+		log.SetLevel(log.ErrorLevel)
 	default:
-		logger.Level = logrus.InfoLevel
-		logger.Warningf("log level %q not available, use debug|info|warning|error. Using Info log level", l)
+		log.SetLevel(log.InfoLevel)
+		log.Warningf("log level %q not available, use debug|info|warning|error. Using Info log level", l)
 		logLevel = "info"
 	}
-	logger.Debugf("Using %s log level", logLevel)
+	log.Debugf("Using %s log level", logLevel)
 }
 
 // Init load configuration,
@@ -123,12 +124,12 @@ func (a *AppConfig) Init(config string) error {
 	/*
 		Extract data from yaml configuration file
 	*/
-	logger.Debugf("loading configuration file: %v", config)
+	log.Debugf("loading configuration file: %v", config)
 	configData, err := ioutil.ReadFile(config)
 	if err != nil {
 		return fmt.Errorf("failed to read config file %s: %v", config, err)
 	}
-	logger.Debugf("unmarshal data: %v", configData)
+	log.Debugf("unmarshal data: %v", configData)
 	if err := yaml.Unmarshal(configData, &a); err != nil {
 		return fmt.Errorf("error parse config file %s: %v", config, err)
 	}
@@ -146,7 +147,8 @@ func (a *AppConfig) Init(config string) error {
 	if err != nil {
 		return fmt.Errorf("error getting current directory: %v", err)
 	}
-	defaultAssetsDir := fmt.Sprintf("%v/assets", currentDir)
+	defaultAssetsDir := fmt.Sprintf("%v/web/assets", currentDir)
+	defaultTemplatesDir := fmt.Sprintf("%v/web/templates", currentDir)
 	/*
 		Error checks: list of checks which make loginapp failed
 	*/
@@ -178,6 +180,9 @@ func (a *AppConfig) Init(config string) error {
 		{a.WebOutput.AssetsDir == "", fmt.Sprintf("no assets_dir specified, using default: %v", defaultAssetsDir), func() {
 			a.WebOutput.AssetsDir = defaultAssetsDir
 		}},
+		{a.WebOutput.TemplatesDir == "", fmt.Sprintf("no templates_dir specified, using default: %v", defaultTemplatesDir), func() {
+			a.WebOutput.TemplatesDir = defaultTemplatesDir
+		}},
 		{a.WebOutput.MainUsernameClaim == "", "no output main_username_claim specified, using default: 'name'", func() {
 			a.WebOutput.MainUsernameClaim = "name"
 		}},
@@ -187,6 +192,6 @@ func (a *AppConfig) Init(config string) error {
 	}
 	_ = check(defaultChecks)
 
-	logger.Debugf("Configuration loaded: %+v", a)
+	log.Debugf("Configuration loaded: %+v", a)
 	return nil
 }

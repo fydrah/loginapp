@@ -11,24 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// Some code comes from @ericchiang (Dex - CoreOS)
 
+// Loginapp is an OIDC authentication web interface.
+// It is mainly designed to render the token issued by an IdP (like Dex) in
+// a kubernetes kubeconfig format.
 package main
 
 import (
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
+	"github.com/fydrah/loginapp/app/loginapp"
+	log "github.com/sirupsen/logrus"
+	"os"
 )
 
-// Routes setup the server router
-func (s *Server) Routes() {
-	s.router.GET("/", s.HandleLogin)
-	s.router.GET("/callback", s.HandleGetCallback)
-	s.router.GET("/healthz", s.HandleGetHealthz)
-	s.router.ServeFiles("/assets/*filepath", http.Dir(s.config.WebOutput.AssetsDir))
-	logger.Debug("routes loaded")
-}
-
-// PrometheusRoutes setup the prometheus router
-func (s *Server) PromertheusRoutes() {
-	s.promrouter.Handler("GET", "/metrics", promhttp.Handler())
+func main() {
+	app := loginapp.NewCli()
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
 }

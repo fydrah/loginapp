@@ -13,19 +13,8 @@
 // limitations under the License.
 // Some code comes from @ericchiang (Dex - CoreOS)
 
-// Loginapp is an OIDC authentication web interface.
-// It is mainly designed to render the token issued by an IdP (like Dex) in
-// a kubernetes kubeconfig format.
-package main
+package loginapp
 
-import (
-	"github.com/sirupsen/logrus"
-	"os"
-)
-
-var (
-	logger = logrus.New()
-)
 
 // KubeUserInfo contains all values
 // needed by a user for OIDC authentication
@@ -36,11 +25,4 @@ type KubeUserInfo struct {
 	Claims        interface{}
 	UsernameClaim string
 	AppConfig     AppConfig
-}
-
-func main() {
-	app := NewCli()
-	if err := app.Run(os.Args); err != nil {
-		logger.Fatal(err)
-	}
 }

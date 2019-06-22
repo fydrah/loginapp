@@ -22,3 +22,13 @@ log:
   format: json
 web_output:
   main_client_id: titi
+clusters:
+  - name: myfakecluster
+    server: https://myfakecluster.org
+    certificate-authority: |
+      -----BEGIN CERTIFICATE-----
+      MIIC/zCCAeegAwIBAgIULkYvGJPRl50tMoVE4BNM0laRQncwDQYJKoZIhvcNAQEL
+      BQAwDzENMAsGA1UEAwwEbXljYTAeFw0xOTAyMTgyMjA5NTJaFw0xOTAyMjgyMjA5
+      NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      -----END CERTIFICATE-----
+    insecure-skip-tls-verify: false
