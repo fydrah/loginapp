@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Some code comes from @ericchiang (Dex - CoreOS)
 
 // Loginapp is an OIDC authentication web interface.
 // It is mainly designed to render the token issued by an IdP (like Dex) in
@@ -19,7 +18,7 @@
 package main
 
 import (
-	"github.com/fydrah/loginapp/app/loginapp"
+	loginapp "github.com/fydrah/loginapp/internal/app/loginapp"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
