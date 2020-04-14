@@ -1,2 +1,5 @@
 dev.env
 bin/
+vendor/
+build/*
+test/kubernetes/generated

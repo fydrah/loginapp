@@ -2,11 +2,13 @@
 
 [![Docker Repository on Quay](https://quay.io/repository/fydrah/loginapp/status "Docker Repository on Quay")](https://quay.io/repository/fydrah/loginapp) [![codebeat badge](https://codebeat.co/badges/bb90084d-9b89-4af7-9a2c-150b7d4802da)](https://codebeat.co/projects/github-com-fydrah-loginapp-master) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/0689fc84adb844cab356a625625ef54c)](https://www.codacy.com/app/fydrah/loginapp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fydrah/loginapp&amp;utm_campaign=Badge_Grade) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffydrah%2Floginapp.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffydrah%2Floginapp?ref=badge_shield)
 
+![Loginapp Demo](docs/img/demo.gif)
 
 
 **Web application for Kubernetes CLI configuration with OIDC**
 
-Original source code from [coreos/dex repository](https://github.com/coreos/dex/tree/master/cmd/example-app)
+The code base of this repository use some source code from the original
+[dexidp/dex repository](https://github.com/dexidp/dex/tree/master/cmd/example-app).
 
 ## Usage
 
@@ -132,43 +134,29 @@ Two main examples are available:
 
 ## Kubernetes
 
-This application is built to run on a Kubernetes cluster. You will find usage examples here:
-* Helm: [Helm chart](https://github.com/ObjectifLibre/k8s-ldap/tree/master/charts/k8s-ldap) is available on ObjectifLibre/k8s-ldap repository.
+You have many ways to run loginapp:
 
-* Kubernetes: A full example is available on [ObjectifLibre/k8s-ldap repository](https://github.com/ObjectifLibre/k8s-ldap)
+* In a container:
+
+  * On top of a Kubernetes cluster
+  * As a standalone container
+
+* Just with the binary:
+
+  * As a daemon (systemd service)
+  * Run binary for [development purpose](##Dev)
+
+We advice to run loginapp on top of a kubernetes cluster, as a [Deployment](./deployments/kubernetes/as_deployment/) or a [DaemonSet](./deployments/kubernetes/as_daemonset/)
 
 ## Dev
 
-###### Setup Dex
-
-* (Optional) Configure GitHub OAuth App
-
-```shell
-  # Configure github oauth secrets if needed.
-  # You must create an app in your github account before.
-  cat <<EOF > dev.env
-GITHUB_CLIENT_ID=yourclientid
-GITHUB_CLIENT_SECRET=yoursecretid
-EOF
-```
-
-* Configure host entry
-
-```shell
-  echo "127.0.0.1 dex.example.com" | sudo tee -a /etc/hosts
-  docker-compose up -d
-```
-
-* User: admin@example.com
-* Password: password
-
 ###### Manage dependencies
 
-Loginapp uses [golang dep](https://golang.github.io/dep/docs/installation.html).
+Loginapp uses go modules to manage dependencies.
 
 ```shell
-  # Update dependencies
-  dep ensure
+  # Retrieve dependencies (vendor)
+  go mod vendor
 ```
 
 ###### Compile, configure and run
@@ -176,26 +164,7 @@ Loginapp uses [golang dep](https://golang.github.io/dep/docs/installation.html).
 Configuration files are located in [example directory](./example/)
 
 ```shell
-  make
-  bin/loginapp serve example/config-loginapp-full.yaml
-```
-
-You can also build a temporary Docker image for loginapp, and
-run it with docker-compose (uncomment lines and replace image name):
-
-```shell
-  make docker-tmp
-```
-
-###### Run checks
-
-Some checks can be launched before commits:
-* errorcheck: check for unchecked errors
-* gocyclo: cyclomatic complexities of functions
-* gosimple: simplify code
-
-```shell
-  make checks
+  $ make
 ```
 
 Run also gofmt before any new commit:
@@ -204,8 +173,41 @@ Run also gofmt before any new commit:
   make gofmt
 ```
 
-## Contributions
+###### Dev env
 
-Contributions (and issues) are welcomed.
+Loginapp uses [kind](https://github.com/kubernetes-sigs/kind) and [skaffold](https://github.com/GoogleContainerTools/skaffold) for development environment.
 
-I started this project to learn golang, so you will surely find some weird stuff. Please let me know if some code could be improved.
+Setup steps:
+
+1. Launch a kind cluster:
+
+    ```
+    $ test/kubernetes/kindup.sh
+    [...]
+    Now you can run:
+
+    test/kubernetes/genconf.sh 172.17.0.2
+    ```
+
+2. Generate Dex & Loginapp certificates and configuration for the dev env:
+
+    ```
+    # "172.17.0.2" is the IP of the kind control plane container
+    # If you lost it, run:
+    # "docker inspect loginapp-control-plane -f '{{ .NetworkSettings.Networks.bridge.IPAddress }}"
+    $ test/kubernetes/genconf.sh 172.17.0.2
+    [...]
+    Creating TLS secret for loginapp
+    Generating dex and loginapp configurations
+    ```
+
+3. Launch skaffold:
+
+    ```
+    $ skaffold run
+    ```
+
+4. To access loginapp UI, go to https://loginapp.${NODE_IP}.nip.io:32001, where **NODE_IP** is the IP of the kind control plane container. Default user/password configured by Dex is:
+
+    * User: admin@example.com
+    * Password: password
