@@ -9,7 +9,7 @@ GIT_TAG				:= $(shell git describe --tags)
 
 # Go
 GOFLAGS			:=
-LDFLAGS			= -w -s -X main.GitVersion=$(GIT_TAG) -X main.GitHash=$(GIT_COMMIT_ID)
+LDFLAGS			= -w -s -X "$(GIT_REPOSITORY)/internal/app/loginapp.GitVersion=$(GIT_TAG)" -X "$(GIT_REPOSITORY)/internal/app/loginapp.GitHash=$(GIT_COMMIT_ID)"
 
 # Docker
 DOCKERFILE		:= Dockerfile

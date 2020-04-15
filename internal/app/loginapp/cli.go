@@ -17,7 +17,10 @@ package loginapp
 
 import (
 	"fmt"
-	"github.com/urfave/cli"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"os"
+	"strings"
 )
 
 var (
@@ -25,61 +28,53 @@ var (
 	GitVersion = "X.X.X"
 	// GitHash return hash of latest commit
 	GitHash = "XXXXXXX"
+
+	loginappCmd = &cobra.Command{
+		Use:     "loginapp",
+		Short:   "Web application for Kubernetes CLI configuration with OIDC",
+		Version: fmt.Sprintf("%v build %v\n", GitVersion, GitHash),
+	}
+
+	serveCmd = &cobra.Command{
+		Use:   "serve",
+		Short: "Run loginapp application",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := &Server{}
+			if err := s.config.Init(); err != nil {
+				cmd.SilenceUsage = true
+				return err
+			}
+			if err := s.Run(); err != nil {
+				cmd.SilenceUsage = true
+				return err
+			}
+			return nil
+		},
+	}
+
+	configFile string
 )
 
-// NewCli configure loginapp CLI
-func NewCli() *cli.App {
-	app := cli.NewApp()
-	cli.AppHelpTemplate = `
-NAME:
-    {{.Name}} - {{.UsageText}}
-{{if len .Authors}}
-AUTHOR:
-    {{range .Authors}}{{ . }}{{end}}
-{{end}}
-USAGE:
-    {{.HelpName}}{{if .VisibleFlags}} [global options]{{end}}{{if .Commands}} command [command options]{{end}}
-{{if .Commands}}
-COMMANDS:
-{{range .Commands}}{{if not .HideHelp}}    {{join .Names ", "}}{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
-GLOBAL OPTIONS:
-    {{range .VisibleFlags}}{{.}}
-    {{end}}{{end}}
-`
-	app.UsageText = "Web application for Kubernetes CLI configuration with OIDC"
-	app.Version = fmt.Sprintf("%v build %v", GitVersion, GitHash)
-	app.Authors = []cli.Author{
-		{
-			Name:  "fydrah",
-			Email: "flav.hardy@gmail.com",
-		},
+func init() {
+	// Configure flags
+	serveCmd.Flags().StringVar(&configFile, "config", "", "Configuration file")
+	serveCmd.MarkFlagRequired("config")
+
+	// Configure Sub-commands
+	loginappCmd.AddCommand(serveCmd)
+
+	// Configure init, for us read configuration file and env vars
+	cobra.OnInitialize(func() {
+		viper.SetConfigType("yaml")
+		viper.SetConfigFile(configFile)
+		viper.SetEnvPrefix("loginapp")
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+		viper.AutomaticEnv()
+	})
+}
+
+func Execute() {
+	if err := loginappCmd.Execute(); err != nil {
+		os.Exit(1)
 	}
-	app.Commands = []cli.Command{
-		{
-			Name:            "serve",
-			Usage:           "Run loginapp application",
-			SkipFlagParsing: true,
-			ArgsUsage:       "[configuration file]",
-			Before: func(c *cli.Context) error {
-				return nil
-			},
-			Action: func(c *cli.Context) error {
-				if len(c.Args()) == 0 {
-					if err := cli.ShowCommandHelp(c, c.Command.Name); err != nil {
-						return fmt.Errorf("error while rendering command help: %v", err)
-					}
-					return fmt.Errorf("missing argument")
-				}
-				s := &Server{}
-				if err := s.config.Init(c.Args().First()); err != nil {
-					return err
-				}
-				if err := s.Run(); err != nil {
-					return err
-				}
-				return nil
-			},
-		},
-	}
-	return app
 }

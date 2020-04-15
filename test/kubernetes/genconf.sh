@@ -133,11 +133,11 @@ data:
       client:
         id: "loginapp"
         secret: ZXhhbXBsZS1hcHAtc2VjcmV0
-        redirect_url: "https://loginapp.${NODE_IP}.nip.io:32001/callback"
+        redirectURL: "https://loginapp.${NODE_IP}.nip.io:32001/callback"
       issuer:
-        root_ca: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+        rootCA: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
         url: "https://dex.${NODE_IP}.nip.io:32000"
-      extra_scopes:
+      extraScopes:
         - groups
     tls:
       enabled: true

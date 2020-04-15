@@ -17,12 +17,15 @@ package loginapp
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"github.com/spf13/viper"
 	"os"
 	"strings"
 )
 
+// AppConfig contains all configuration options. Options
+// are overrided by environement variables with
+// the prefix LOGINAPP_ followed by the path of the option.
+// Ex: LOGINAPP_OIDC_CLIENT_ID=customid
 type AppConfig struct {
 	Name   string `yaml:"name"`
 	Listen string `yaml:"listen"`
@@ -30,16 +33,16 @@ type AppConfig struct {
 		Client struct {
 			ID          string `yaml:"id"`
 			Secret      string `yaml:"secret"`
-			RedirectURL string `yaml:"redirect_url"`
+			RedirectURL string `yaml:"redirectURL"`
 		} `yaml:"client"`
 		Issuer struct {
 			URL    string `yaml:"url"`
-			RootCA string `yaml:"root_ca"`
+			RootCA string `yaml:"rootCA"`
 		} `yaml:"issuer"`
-		ExtraScopes       []string          `yaml:"extra_scopes"`
-		ExtraAuthCodeOpts map[string]string `yaml:"extra_auth_code_opts"`
-		OfflineAsScope    *bool             `yaml:"offline_as_scope"`
-		CrossClients      []string          `yaml:"cross_clients"`
+		ExtraScopes       []string          `yaml:"extraScopes"`
+		ExtraAuthCodeOpts map[string]string `yaml:"extraAuthCodeOpts"`
+		OfflineAsScope    *bool             `yaml:"offlineAsScope"`
+		CrossClients      []string          `yaml:"crossClients"`
 	} `yaml:"oidc"`
 	TLS struct {
 		Enabled bool   `yaml:"enabled"`
@@ -51,11 +54,11 @@ type AppConfig struct {
 		Format string `yaml:"format"`
 	} `yaml:"log"`
 	WebOutput struct {
-		MainUsernameClaim string `yaml:"main_username_claim"`
-		MainClientID      string `yaml:"main_client_id"`
-		AssetsDir         string `yaml:"assets_dir"`
-		TemplatesDir      string `yaml:"templates_dir"`
-	} `yaml:"web_output"`
+		MainUsernameClaim string `yaml:"mainUsernameClaim"`
+		MainClientID      string `yaml:"mainClientID"`
+		AssetsDir         string `yaml:"assetsDir"`
+		TemplatesDir      string `yaml:"templatesDir"`
+	} `yaml:"webOutput"`
 	Prometheus struct {
 		Port int `yaml:"port"`
 	} `yaml:"prometheus"`
@@ -65,9 +68,9 @@ type AppConfig struct {
 // appCheck struct
 // used by check function
 type appCheck struct {
-	Condition     bool
-	Message       string
-	DefaultAction func()
+	FailedCondition bool
+	Message         string
+	DefaultAction   func()
 }
 
 // check checks each appCheck, if one
@@ -75,12 +78,14 @@ type appCheck struct {
 func check(checks []appCheck) bool {
 	checkFailed := false
 	for _, c := range checks {
-		if c.Condition {
-			log.Error(c.Message)
-			checkFailed = true
+		if c.FailedCondition {
 			if c.DefaultAction != nil {
 				c.DefaultAction()
+				log.Info(c.Message)
+			} else {
+				log.Error(c.Message)
 			}
+			checkFailed = true
 		}
 	}
 	return checkFailed
@@ -120,18 +125,15 @@ func configLogger(format string, logLevel string) {
 // Init load configuration,
 // setup logger and run
 // error/warning checks
-func (a *AppConfig) Init(config string) error {
+func (a *AppConfig) Init() error {
 	/*
 		Extract data from yaml configuration file
 	*/
-	log.Debugf("loading configuration file: %v", config)
-	configData, err := ioutil.ReadFile(config)
-	if err != nil {
-		return fmt.Errorf("failed to read config file %s: %v", config, err)
+	if err := viper.ReadInConfig(); err != nil {
+		return err
 	}
-	log.Debugf("unmarshal data: %v", configData)
-	if err := yaml.Unmarshal(configData, &a); err != nil {
-		return fmt.Errorf("error parse config file %s: %v", config, err)
+	if err := viper.Unmarshal(&a); err != nil {
+		return err
 	}
 
 	/*
@@ -141,7 +143,7 @@ func (a *AppConfig) Init(config string) error {
 
 	/*
 		Configuration checks
-		(inspired from https://github.com/coreos/dex/blob/master/cmd/dex/serve.go)
+		(inspired from https://github.com/dexidp/dex/blob/master/cmd/dex/serve.go)
 	*/
 	currentDir, err := os.Getwd()
 	if err != nil {
