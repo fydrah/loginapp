@@ -27,7 +27,14 @@ spec:
         command:
           - "/loginapp"
           - "serve"
+          - "-c"
           - "/app/config.yaml"
+        env:
+          - name: LOGINAPP_NAME
+            value: "Kubernetes Auth (override by env)"
+        envFrom:
+          - secretRef:
+              name: loginapp-secret-env
         ports:
         - name: https
           containerPort: 8443
@@ -78,6 +85,7 @@ metadata:
   labels:
     app.kubernetes.io/name: loginapp
   name: loginapp
+  namespace: kube-system
 spec:
   type: NodePort
   ports:

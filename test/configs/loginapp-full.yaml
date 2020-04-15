@@ -4,14 +4,14 @@ oidc:
   client:
     id: "loginapp"
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
-    redirect_url: "https://127.0.0.1:5555/callback"
+    redirectURL: "https://127.0.0.1:5555/callback"
   issuer:
-    root_ca: "scripts/ssl/ca.pem"
+    rootCA: "scripts/ssl/ca.pem"
     url: "https://dex.example.com:5556"
-  extra_scopes:
+  extraScopes:
     - groups
-  offline_as_scope: true
-  cross_clients:
+  offlineAsScope: true
+  crossClients:
   - web
 tls:
   enabled: true
@@ -20,19 +20,19 @@ tls:
 log:
   level: Debug
   format: json
-web_output:
-  main_client_id: "loginapp"
-  main_username_claim: "email"
-  assets_dir: "./web/assets"
-  templates_dir: "./web/templates"
-  skip_main_page: false
+webOutput:
+  mainClientId: "loginapp"
+  mainUsernameClaim: "email"
+  assetsDir: "./web/assets"
+  templatesDir: "./web/templates"
+  skipMainPage: false
 clusters:
   - name: myfakecluster
     server: https://myfakecluster.org
-    certificate-authority: |
+    certificateAuthority: |
       -----BEGIN CERTIFICATE-----
       MIIC/zCCAeegAwIBAgIULkYvGJPRl50tMoVE4BNM0laRQncwDQYJKoZIhvcNAQEL
       BQAwDzENMAsGA1UEAwwEbXljYTAeFw0xOTAyMTgyMjA5NTJaFw0xOTAyMjgyMjA5
       NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
       -----END CERTIFICATE-----
-    insecure-skip-tls-verify: false
+    insecureSkipTLSVerify: false

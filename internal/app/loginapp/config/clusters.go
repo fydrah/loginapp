@@ -11,21 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Some code comes from @ericchiang (Dex - CoreOS)
 
-package loginapp
+package config
 
-import (
-	"github.com/fydrah/loginapp/internal/app/loginapp/config"
-)
-
-// KubeUserInfo contains all values
-// needed by a user for OIDC authentication
-type KubeUserInfo struct {
-	IDToken       string
-	RefreshToken  string
-	RedirectURL   string
-	Claims        interface{}
-	UsernameClaim string
-	AppConfig     *config.App
+// Cluster describes a kubernetes cluster
+type Cluster struct {
+	Name                  string
+	Server                string
+	InsecureSkipTLSVerify bool
+	CertificateAuthority  string
 }

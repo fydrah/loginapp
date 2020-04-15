@@ -17,11 +17,12 @@ package loginapp
 
 import (
 	"fmt"
-	"github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
 	"html/template"
 	"net/http"
 	"strings"
+
+	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 )
 
 // HandleGetHealthz serves
@@ -61,6 +62,6 @@ func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ htt
 		log.Errorf("error handling cli callback: %v", err)
 		return
 	}
-	var tokenTmpl = template.Must(template.ParseFiles(fmt.Sprintf("%v/token.html", s.config.WebOutput.TemplatesDir)))
+	var tokenTmpl = template.Must(template.ParseFiles(fmt.Sprintf("%v/token.html", s.config.Web.TemplatesDir)))
 	s.RenderTemplate(w, tokenTmpl, kc)
 }

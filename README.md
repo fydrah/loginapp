@@ -13,27 +13,42 @@ The code base of this repository use some source code from the original
 ## Usage
 
 ```shell
-NAME:
-    loginapp - Web application for Kubernetes CLI configuration with OIDC
+Run loginapp application
 
-AUTHOR:
-    fydrah <flav.hardy@gmail.com>
+Usage:
+  loginapp serve [flags]
 
-USAGE:
-    loginapp [global options] command [command options]
-
-COMMANDS:
-    serve    Run loginapp application
-    help, h  Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-    --help, -h     show help
-    --version, -v  print the version
+Flags:
+  -c, --config string                            Configuration file
+  -h, --help                                     help for serve
+  -l, --listen string                            Listen interface and port (default "0.0.0.0:8080")
+      --log-format string                        Log format ([json]|text) (default "json")
+      --log-level string                         Log level (debug|[info]|warning|error) (default "info")
+      --metrics-port int                         Port to export metrics (default 9090)
+  -n, --name string                              Application name. Used for web title. (default "Loginapp")
+      --oidc-client-id string                    Client ID (default "loginapp")
+      --oidc-client-redirecturl string           Redirect URL for callback. This must be the same than the one provided to the IDP. Must end with '/callback'
+      --oidc-client-secret string                Client secret
+      --oidc-crossclients strings                Issue token on behalf of this list of client IDs. Format: 'CROSS_CLIENTID1,CROSS_CLIENTID2
+      --oidc-extra-authcodeopts stringToString   K/V list of extra authorisation code to include in token request (default [])
+      --oidc-extra-scopes strings                List of extra scopes to ask
+      --oidc-issuer-rootca string                Certificate authority of the issuer
+      --oidc-issuer-url string                   Full URL of issuer before '/.well-known/openid-configuration' path
+      --oidc-offlineasscope                      Issue a refresh token for offline access
+      --tls-cert string                          TLS certificate path
+      --tls-enabled                              Enable TLS
+      --tls-key string                           TLS private key path
+      --web-assertsdir string                    Custom asserts directory
+      --web-mailclientid string                  Application client ID (default "loginapp")
+      --web-mainusernameclaim string             Claim to use for username (depends on IDP available claims (default "email")
+      --web-templatedir string                   Custom templates directory
 ```
+
+
 
 ## Configuration
 
-```yaml
+```
 # AppName
 # default: mandatory
 name: "Kubernetes Auth"
@@ -52,31 +67,31 @@ oidc:
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
     # Application Redirect URL
     # default: mandatory
-    redirect_url: "https://127.0.0.1:5555/callback"
+    redirectURL: "https://127.0.0.1:5555/callback"
   # Issuer configuration
   issuer:
     # Location of issuer root CA certificate
     # default: mandatory
-    root_ca: "example/ssl/ca.pem"
+    rootCA: "example/ssl/ca.pem"
     # Issuer URL
     # default: mandatory
     url: "https://dex.example.com:5556"
   # Extra scopes
   # default: []
-  extra_scopes:
+  extraScopes:
     - groups
   # Extra auth code options
   # Some extra auth code options are required for ADFS compatibility (ex: resource).
   # See: https://docs.microsoft.com/fr-fr/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers
   # default: {}
-  extra_auth_code_opts:
+  extraAuthCodeOpts:
     resource: XXXXX
   # Enable offline scope
   # default: false
-  offline_as_scope: true
+  offlineAsScope: true
   # Request token on behalf of other clients
   # default: []
-  cross_clients: []
+  crossClients: []
 # Tls support
 tls:
   # Enable tls termination
@@ -97,16 +112,16 @@ log:
   # default: json
   format: json
 # Configure the web behavior
-web_output:
+webOutput:
   # ClientID to output (useful for cross_client)
   # default: value of 'oidc.client.id'
-  main_client_id: loginapp
+  mainClientID: loginapp
   # Claims to use for kubeconfig username.
   # default: name
-  main_username_claim: email
+  mainUsernameClaim: email
   # Assets directory
   # default: ${pwd}/assets
-  assets_dir: /assets
+  assetsDir: /assets
   # Skip main page of login app
   # default: false
 # Prometheus exporter configuration

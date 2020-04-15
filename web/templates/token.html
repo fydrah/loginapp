@@ -17,11 +17,11 @@
   </script>
   <script src="assets/js/code-box-copy.min.js">
   </script>
-  <title>Kubernetes auth</title>
+  <title>{{ .AppConfig.Name }}</title>
 </head>
 <body>
   <div class="page-header">
-      <center><h1>Kubernetes auth</h1></center>
+      <center><h1>{{ .AppConfig.Name }}</h1></center>
   </div>
   <div class="col-md-1">
   </div>
@@ -45,7 +45,7 @@
             </button>
             <pre><code id="kubectl-code">kubectl config set-credentials {{ .UsernameClaim }} \
     --auth-provider oidc \
-{{- range $k,$v := .AppConfig.OIDC.ExtraAuthCodeOpts }}
+{{- range $k,$v := .AppConfig.OIDC.Extra.AuthCodeOpts }}
     --auth-provider-arg {{ $k }}={{ $v }} \
 {{- end }}
     --auth-provider-arg idp-issuer-url={{ .Claims.iss }} \
@@ -71,7 +71,7 @@
   user:
     auth-provider:
       config:
-{{- range $k,$v := .AppConfig.OIDC.ExtraAuthCodeOpts }}
+{{- range $k,$v := .AppConfig.OIDC.Extra.AuthCodeOpts }}
         {{ $k }}: "{{ $v }}"
 {{- end }}
         idp-issuer-url: {{ .Claims.iss }}
