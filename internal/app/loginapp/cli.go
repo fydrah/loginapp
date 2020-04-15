@@ -17,7 +17,14 @@ package loginapp
 
 import (
 	"fmt"
-	"github.com/urfave/cli"
+	"strings"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/fydrah/loginapp/internal/app/loginapp/config"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -25,61 +32,93 @@ var (
 	GitVersion = "X.X.X"
 	// GitHash return hash of latest commit
 	GitHash = "XXXXXXX"
+
+	appConfig = &config.App{}
+
+	loginappCmd = &cobra.Command{
+		Use:     "loginapp",
+		Short:   "Web application for Kubernetes CLI configuration with OIDC",
+		Version: fmt.Sprintf("%v build %v\n", GitVersion, GitHash),
+	}
+
+	serveCmd = &cobra.Command{
+		Use:   "serve",
+		Short: "Run loginapp application",
+		Long: `
+Perform configuration checks and run Loginapp.
+
+Loginapp supports three configuration formats:
+* Configuration file: '--config' flag
+* Flags: '--oidc-xxx' flags for example
+* Environment vars: each flag provides an environment var with
+  'LOGINAPP_' prefix.
+  Ex: '--oidc-client-secret' --> 'LOGINAPP_OIDC_CLIENT_SECRET'
+
+Configuration precedence: flags > environment vars > configuration file`,
+		Run: func(cmd *cobra.Command, args []string) {
+			s := NewServer(appConfig)
+			if err := s.config.Init(); err != nil {
+				log.Fatal(err)
+			}
+			// ConfigChange is trigger more than once sometimes,
+			// check issue https://github.com/spf13/viper/issues/609
+			viper.OnConfigChange(func(e fsnotify.Event) {
+				log.Info("Configuration changed, reloading...")
+				if err := s.config.Init(); err != nil {
+					cmd.SilenceUsage = true
+					log.Errorf("Configuration init failed: %v", err)
+					log.Info("Still using previous configuration")
+				}
+			})
+			if err := s.Run(); err != nil {
+				cmd.SilenceUsage = true
+				log.Fatal(err)
+			}
+		},
+	}
+
+	configFile string
+	verbose    bool
 )
 
-// NewCli configure loginapp CLI
-func NewCli() *cli.App {
-	app := cli.NewApp()
-	cli.AppHelpTemplate = `
-NAME:
-    {{.Name}} - {{.UsageText}}
-{{if len .Authors}}
-AUTHOR:
-    {{range .Authors}}{{ . }}{{end}}
-{{end}}
-USAGE:
-    {{.HelpName}}{{if .VisibleFlags}} [global options]{{end}}{{if .Commands}} command [command options]{{end}}
-{{if .Commands}}
-COMMANDS:
-{{range .Commands}}{{if not .HideHelp}}    {{join .Names ", "}}{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
-GLOBAL OPTIONS:
-    {{range .VisibleFlags}}{{.}}
-    {{end}}{{end}}
-`
-	app.UsageText = "Web application for Kubernetes CLI configuration with OIDC"
-	app.Version = fmt.Sprintf("%v build %v", GitVersion, GitHash)
-	app.Authors = []cli.Author{
-		{
-			Name:  "fydrah",
-			Email: "flav.hardy@gmail.com",
-		},
+func init() {
+	// Create flags
+	appConfig.AddFlags(serveCmd)
+	serveCmd.Flags().VisitAll(func(f *pflag.Flag) {
+		if err := viper.BindPFlag(strings.Replace(f.Name, "-", ".", -1), f); err != nil {
+			log.Fatal(err)
+		}
+	})
+	// Configure flags
+	serveCmd.Flags().StringVarP(&configFile, "config", "c", "", "Configuration file")
+	// serveCmd.MarkFlagRequired("config")
+	// Configure Sub-commands
+	loginappCmd.AddCommand(serveCmd)
+	loginappCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
+
+	// Configuration init, read configuration file and env vars
+	cobra.OnInitialize(func() {
+		log.SetFormatter(&log.JSONFormatter{})
+		log.SetLevel(log.InfoLevel)
+		if verbose {
+			log.SetLevel(log.DebugLevel)
+		}
+		viper.SetConfigType("yaml")
+		if configFile != "" {
+			viper.SetConfigFile(configFile)
+			if err := viper.ReadInConfig(); err != nil {
+				log.Errorf("error while reading configuration file '%s': %v", configFile, err)
+			}
+			viper.WatchConfig()
+		}
+		viper.SetEnvPrefix("loginapp")
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+		viper.AutomaticEnv()
+	})
+}
+
+func Execute() {
+	if err := loginappCmd.Execute(); err != nil {
+		log.Exit(1)
 	}
-	app.Commands = []cli.Command{
-		{
-			Name:            "serve",
-			Usage:           "Run loginapp application",
-			SkipFlagParsing: true,
-			ArgsUsage:       "[configuration file]",
-			Before: func(c *cli.Context) error {
-				return nil
-			},
-			Action: func(c *cli.Context) error {
-				if len(c.Args()) == 0 {
-					if err := cli.ShowCommandHelp(c, c.Command.Name); err != nil {
-						return fmt.Errorf("error while rendering command help: %v", err)
-					}
-					return fmt.Errorf("missing argument")
-				}
-				s := &Server{}
-				if err := s.config.Init(c.Args().First()); err != nil {
-					return err
-				}
-				if err := s.Run(); err != nil {
-					return err
-				}
-				return nil
-			},
-		},
-	}
-	return app
 }

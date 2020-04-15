@@ -3,3 +3,4 @@ bin/
 vendor/
 build/*
 test/kubernetes/generated
+test/generated

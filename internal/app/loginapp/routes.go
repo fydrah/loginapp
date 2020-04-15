@@ -15,9 +15,10 @@
 package loginapp
 
 import (
+	"net/http"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 // Routes setup the server router
@@ -25,7 +26,7 @@ func (s *Server) Routes() {
 	s.router.GET("/", s.HandleLogin)
 	s.router.GET("/callback", s.HandleGetCallback)
 	s.router.GET("/healthz", s.HandleGetHealthz)
-	s.router.ServeFiles("/assets/*filepath", http.Dir(s.config.WebOutput.AssetsDir))
+	s.router.ServeFiles("/assets/*filepath", http.Dir(s.config.Web.AssetsDir))
 	log.Debug("routes loaded")
 }
 

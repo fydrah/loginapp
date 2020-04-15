@@ -12,12 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package loginapp
+package config
 
-// Cluster describes a kubernetes cluster
-type Cluster struct {
-	Name                  string `yaml:"name"`
-	Server                string `yaml:"server"`
-	InsecureSkipTLSVerify bool   `yaml:"insecure-skip-tls-verify"`
-	CertificateAuthority  string `yaml:"certificate-authority"`
+import (
+	"github.com/spf13/cobra"
+)
+
+// TLS is the tls configuration, required to configure HTTPS endpoint for Loginapp
+type TLS struct {
+	Enabled bool
+	Cert    string
+	Key     string
+}
+
+func (t *TLS) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().Bool("tls-enabled", false, "Enable TLS")
+	cmd.Flags().String("tls-cert", "", "TLS certificate path")
+	cmd.Flags().String("tls-key", "", "TLS private key path")
 }

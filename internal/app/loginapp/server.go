@@ -20,25 +20,33 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"net/http"
+
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/go-oidc"
+	"github.com/fydrah/loginapp/internal/app/loginapp/config"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-	"html/template"
-	"net/http"
 )
 
 // Server is the description
 // of loginapp web server
 type Server struct {
 	client     *http.Client
-	config     AppConfig
+	config     *config.App
 	provider   *oidc.Provider
 	router     *httprouter.Router
 	verifier   *oidc.IDTokenVerifier
 	context    context.Context
 	promrouter *httprouter.Router
+}
+
+func NewServer(cfg *config.App) *Server {
+	s := &Server{}
+	s.config = cfg
+	return s
 }
 
 // OAuth2Config generate oauth config
@@ -63,7 +71,7 @@ func (s *Server) PrepareCallbackURL() string {
 		authCodeURL          string
 	)
 
-	scopes = append(scopes, s.config.OIDC.ExtraScopes...)
+	scopes = append(scopes, s.config.OIDC.Extra.Scopes...)
 	// Prepare cross client auth
 	// see https://github.com/coreos/dex/blob/master/Documentation/custom-scopes-claims-clients.md
 	for _, crossClient := range s.config.OIDC.CrossClients {
@@ -71,10 +79,10 @@ func (s *Server) PrepareCallbackURL() string {
 	}
 
 	scopes = append(scopes, "openid", "profile", "email", "groups")
-	if *s.config.OIDC.OfflineAsScope {
+	if s.config.OIDC.OfflineAsScope {
 		scopes = append(scopes, "offline_access")
 	}
-	for p, v := range s.config.OIDC.ExtraAuthCodeOpts {
+	for p, v := range s.config.OIDC.Extra.AuthCodeOpts {
 		extraAuthCodeOptions = append(extraAuthCodeOptions, oauth2.SetAuthURLParam(p, v))
 	}
 	authCodeURL = s.OAuth2Config(scopes).AuthCodeURL(s.config.Name, extraAuthCodeOptions...)
@@ -141,8 +149,8 @@ func (s *Server) ProcessCallback(w http.ResponseWriter, r *http.Request) (KubeUs
 		panic(err)
 	}
 	var usernameClaim interface{}
-	if usernameClaim = jsonClaims[s.config.WebOutput.MainUsernameClaim]; usernameClaim == nil {
-		msg := fmt.Sprintf("failed to find a claim matching the main_username_claim '%v'", s.config.WebOutput.MainUsernameClaim)
+	if usernameClaim = jsonClaims[s.config.Web.MainUsernameClaim]; usernameClaim == nil {
+		msg := fmt.Sprintf("failed to find a claim matching the main_username_claim '%v'", s.config.Web.MainUsernameClaim)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return KubeUserInfo{}, fmt.Errorf(msg)
 	}
@@ -164,7 +172,6 @@ func (s *Server) RenderTemplate(w http.ResponseWriter, tmpl *template.Template, 
 	if err == nil {
 		return
 	}
-	log.Debugf("data: %v", data)
 	switch err := err.(type) {
 	case *template.Error:
 		log.Errorf("error rendering template %s: %s", tmpl.Name(), err)
@@ -216,19 +223,16 @@ func (s *Server) Run() error {
 		return fmt.Errorf("failed to parse provider scopes_supported: %v", err)
 	}
 
-	if s.config.OIDC.OfflineAsScope == nil {
+	if !s.config.OIDC.OfflineAsScope {
 		if len(ss.ScopesSupported) > 0 {
 			// See if scopes_supported has the "offline_access" scope.
-			s.config.OIDC.OfflineAsScope = func() *bool {
-				b := new(bool)
+			s.config.OIDC.OfflineAsScope = func() bool {
 				for _, scope := range ss.ScopesSupported {
 					if scope == oidc.ScopeOfflineAccess {
-						*b = true
-						return b
+						return true
 					}
 				}
-				*b = false
-				return b
+				return false
 			}()
 		}
 	}
@@ -237,8 +241,8 @@ func (s *Server) Run() error {
 	s.verifier = provider.Verifier(&oidc.Config{ClientID: s.config.OIDC.Client.ID})
 
 	// Start prometheus metric exporter
-	log.Infof("export metric on http://0.0.0.0:%v", s.config.Prometheus.Port)
-	go PrometheusMetrics(s.config.Prometheus.Port)
+	log.Infof("export metric on http://0.0.0.0:%v", s.config.Metrics.Port)
+	go PrometheusMetrics(s.config.Metrics.Port)
 
 	// Run
 	if s.config.TLS.Enabled {

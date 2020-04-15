@@ -3,10 +3,9 @@
 # /!\ For testing purpose only
 
 CURR_DIR=$(dirname $0)
+NODE_IP=$(docker inspect loginapp-control-plane -f '{{ .NetworkSettings.Networks.bridge.IPAddress }}')
 
-NODE_IP=$1
-
-mkdir -p ${CURR_DIR}/generated/ssl
+mkdir -p ${CURR_DIR}/generated/ssl ${CURR_DIR}/kubernetes/generated
 
 for cert in dex loginapp
 do
@@ -28,6 +27,7 @@ subjectAltName = @alt_names
 
 [alt_names]
 DNS.1 = ${cert}.${NODE_IP}.nip.io
+DNS.2 = ${cert}.127.0.0.1.nip.io
 EOF
 
 [ -e ${CURR_DIR}/generated/ssl/key-${cert}.pem ] || openssl genrsa -out ${CURR_DIR}/generated/ssl/key-${cert}.pem 2048 >/dev/null
@@ -63,7 +63,8 @@ done
 echo "OK"
 
 echo "Creating TLS secret for ${cert}"
-cat <<EOF > ${CURR_DIR}/generated/${cert}-certs.yaml
+kubectl get csr ${cert} -o jsonpath='{.status.certificate}' | base64 -d > ${CURR_DIR}/generated/ssl/${cert}.crt
+cat <<EOF > ${CURR_DIR}/kubernetes/generated/${cert}-certs.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -80,7 +81,7 @@ done
 echo "Generating dex and loginapp configurations"
 
 ### Dex
-cat <<EOF > ${CURR_DIR}/generated/dex-config.yaml
+cat <<EOF > ${CURR_DIR}/kubernetes/generated/dex-config.yaml
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -105,8 +106,13 @@ data:
     - id: loginapp
       redirectURIs:
       - 'https://loginapp.${NODE_IP}.nip.io:32001/callback'
-      name: 'Example App'
+      name: 'Loginapp Kube'
       secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+    - id: loginapp-local
+      redirectURIs:
+      - 'https://loginapp.127.0.0.1.nip.io:8443/callback'
+      name: 'Loginapp local'
+      secret: ZXhhbXBsZS1hcHAtc2VjcmV1
 
     enablePasswordDB: true
     staticPasswords:
@@ -118,7 +124,7 @@ data:
 EOF
 
 ### Loginapp
-cat <<EOF > ${CURR_DIR}/generated/loginapp-config.yaml
+cat <<EOF > ${CURR_DIR}/kubernetes/generated/loginapp-config.yaml
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -132,12 +138,11 @@ data:
     oidc:
       client:
         id: "loginapp"
-        secret: ZXhhbXBsZS1hcHAtc2VjcmV0
-        redirect_url: "https://loginapp.${NODE_IP}.nip.io:32001/callback"
+        redirectURL: "https://loginapp.${NODE_IP}.nip.io:32001/callback"
       issuer:
-        root_ca: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+        rootCA: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
         url: "https://dex.${NODE_IP}.nip.io:32000"
-      extra_scopes:
+      extraScopes:
         - groups
     tls:
       enabled: true
@@ -156,4 +161,51 @@ data:
           NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
           -----END CERTIFICATE-----
         insecure-skip-tls-verify: false
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: loginapp-secret-env
+  namespace: kube-system
+type: Opaque
+data:
+  # original: ZXhhbXBsZS1hcHAtc2VjcmV0
+  LOGINAPP_OIDC_CLIENT_SECRET: WlhoaGJYQnNaUzFoY0hBdGMyVmpjbVYwCg==
 EOF
+
+cat <<EOF > ${CURR_DIR}/generated/loginapp-config-manual.yaml
+---
+name: "Kubernetes Auth"
+listen: "0.0.0.0:8443"
+oidc:
+  client:
+    id: "loginapp-local"
+    secret: ZXhhbXBsZS1hcHAtc2VjcmV1
+    redirectURL: "https://loginapp.127.0.0.1.nip.io:8443/callback"
+  issuer:
+    rootCA: "${CURR_DIR}/generated/ssl/ca.crt"
+    url: "https://dex.${NODE_IP}.nip.io:32000"
+  extraScopes:
+    - groups
+tls:
+  enabled: true
+  cert: ${CURR_DIR}/generated/ssl/loginapp.crt
+  key: ${CURR_DIR}/generated/ssl/key-loginapp.pem
+log:
+  level: Debug
+  format: json
+clusters:
+  - name: myfakecluster
+    server: https://myfakecluster.org
+    certificate-authority: |
+      -----BEGIN CERTIFICATE-----
+      MIIC/zCCAeegAwIBAgIULkYvGJPRl50tMoVE4BNM0laRQncwDQYJKoZIhvcNAQEL
+      BQAwDzENMAsGA1UEAwwEbXljYTAeFw0xOTAyMTgyMjA5NTJaFw0xOTAyMjgyMjA5
+      NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      -----END CERTIFICATE-----
+    insecure-skip-tls-verify: false
+EOF
+
+### Get Kubernetes certificate authority
+echo "Get Kubernetes certificate authority (${CURR_DIR}/generated/ssl/ca.crt)"
+kubectl config view --minify --flatten  -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d > ${CURR_DIR}/generated/ssl/ca.crt
