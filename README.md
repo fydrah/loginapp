@@ -13,22 +13,20 @@ The code base of this repository use some source code from the original
 ## Usage
 
 ```shell
-NAME:
-    loginapp - Web application for Kubernetes CLI configuration with OIDC
+Web application for Kubernetes CLI configuration with OIDC
 
-AUTHOR:
-    fydrah <flav.hardy@gmail.com>
+Usage:
+  loginapp [command]
 
-USAGE:
-    loginapp [global options] command [command options]
+Available Commands:
+  help        Help about any command
+  serve       Run loginapp application
 
-COMMANDS:
-    serve    Run loginapp application
-    help, h  Shows a list of commands or help for one command
+Flags:
+  -h, --help      help for loginapp
+  -v, --version   version for loginapp
 
-GLOBAL OPTIONS:
-    --help, -h     show help
-    --version, -v  print the version
+Use "loginapp [command] --help" for more information about a command.
 ```
 
 ## Configuration
@@ -52,31 +50,31 @@ oidc:
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
     # Application Redirect URL
     # default: mandatory
-    redirect_url: "https://127.0.0.1:5555/callback"
+    redirectURL: "https://127.0.0.1:5555/callback"
   # Issuer configuration
   issuer:
     # Location of issuer root CA certificate
     # default: mandatory
-    root_ca: "example/ssl/ca.pem"
+    rootCA: "example/ssl/ca.pem"
     # Issuer URL
     # default: mandatory
     url: "https://dex.example.com:5556"
   # Extra scopes
   # default: []
-  extra_scopes:
+  extraScopes:
     - groups
   # Extra auth code options
   # Some extra auth code options are required for ADFS compatibility (ex: resource).
   # See: https://docs.microsoft.com/fr-fr/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers
   # default: {}
-  extra_auth_code_opts:
+  extraAuthCodeOpts:
     resource: XXXXX
   # Enable offline scope
   # default: false
-  offline_as_scope: true
+  offlineAsScope: true
   # Request token on behalf of other clients
   # default: []
-  cross_clients: []
+  crossClients: []
 # Tls support
 tls:
   # Enable tls termination
@@ -97,16 +95,16 @@ log:
   # default: json
   format: json
 # Configure the web behavior
-web_output:
+webOutput:
   # ClientID to output (useful for cross_client)
   # default: value of 'oidc.client.id'
-  main_client_id: loginapp
+  mainClientID: loginapp
   # Claims to use for kubeconfig username.
   # default: name
-  main_username_claim: email
+  mainUsernameClaim: email
   # Assets directory
   # default: ${pwd}/assets
-  assets_dir: /assets
+  assetsDir: /assets
   # Skip main page of login app
   # default: false
 # Prometheus exporter configuration

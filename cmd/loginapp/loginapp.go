@@ -14,18 +14,13 @@
 
 // Loginapp is an OIDC authentication web interface.
 // It is mainly designed to render the token issued by an IdP (like Dex) in
-// a kubernetes kubeconfig format.
+// a kubernetes kubectl/kubeconfig format.
 package main
 
 import (
 	loginapp "github.com/fydrah/loginapp/internal/app/loginapp"
-	log "github.com/sirupsen/logrus"
-	"os"
 )
 
 func main() {
-	app := loginapp.NewCli()
-	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
-	}
+	loginapp.Execute()
 }

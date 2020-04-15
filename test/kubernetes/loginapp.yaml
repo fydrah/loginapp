@@ -27,7 +27,11 @@ spec:
         command:
           - "/loginapp"
           - "serve"
+          - "--config"
           - "/app/config.yaml"
+        env:
+          - name: LOGINAPP_NAME
+            value: "Kubernetes Auth (override by env)"
         ports:
         - name: https
           containerPort: 8443
