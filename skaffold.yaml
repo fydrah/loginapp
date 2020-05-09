@@ -22,4 +22,20 @@ profiles:
       - test/kubernetes/generated/loginapp-certs.yaml
       - test/kubernetes/generated/loginapp-config.yaml
       - test/kubernetes/loginapp.yaml
-# - name: helm
+- name: helm
+  build:
+    artifacts:
+    - image: quay.io/fydrah/loginapp
+  deploy:
+    kubectl:
+      manifests:
+      - test/kubernetes/generated/loginapp-certs.yaml
+    helm:
+      releases:
+        - name: loginapp
+          chartPath: helm/loginapp
+          namespace: kube-system
+          values:
+            image: quay.io/fydrah/loginapp
+          valuesFiles:
+            - test/helm/overrides.yaml

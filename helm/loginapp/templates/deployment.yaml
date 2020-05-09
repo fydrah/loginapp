@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "loginapp.fullname" . }}
+  labels:
+    {{- include "loginapp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "loginapp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "loginapp.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "loginapp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ include "loginapp.fullname" . }}-env
+          {{- if .Values.env }}
+          env:
+          {{- range $k, $v := .Values.env }}
+            - name: {{ $k }}
+              value: {{ $v }}
+          {{- end }}
+          {{- end }}
+          args:
+            - serve
+            - -c
+            - /cfg/config.yaml
+          ports:
+            - name: http
+              containerPort: 5555
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+              scheme: {{ if .Values.config.tls.enabled }}HTTPS{{ else }}HTTP{{ end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+              scheme: {{ if .Values.config.tls.enabled }}HTTPS{{ else }}HTTP{{ end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: "/cfg"
+            - name: issuer-ca
+              mountPath: "/tls/issuer"
+            {{- if .Values.config.tls.enabled }}
+            - name: tls
+              mountPath: "/tls/server"
+            {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "loginapp.fullname" . }}
+      - name: issuer-ca
+        configMap:
+          name: {{ .Values.config.issuerRootCA.configMap }}
+          items:
+            - key: {{ .Values.config.issuerRootCA.key }}
+              path: ca.crt
+      {{- if .Values.config.tls.enabled }}
+      - name: tls
+        secret:
+          secretName: {{ default (print (include "loginapp.fullname" .) "-certs") .Values.config.tls.secretName }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
