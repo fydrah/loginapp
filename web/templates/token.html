@@ -50,8 +50,7 @@
 {{- end }}
     --auth-provider-arg idp-issuer-url={{ .Claims.iss }} \
     --auth-provider-arg client-id={{ .AppConfig.OIDC.Client.ID }} \
-    --auth-provider-arg id-token={{ .IDToken }} \
-{{- if ne .RefreshToken "" }}
+    --auth-provider-arg id-token={{ .IDToken }}{{- if ne .RefreshToken "" }} \
     --auth-provider-arg client-secret={{ .AppConfig.OIDC.Client.Secret }} \
     --auth-provider-arg refresh-token={{ .RefreshToken }}
 {{- end }}</code></pre>

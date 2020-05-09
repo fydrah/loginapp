@@ -11,22 +11,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// Some code comes from @ericchiang (Dex - CoreOS)
 
-package config
+package server
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/fydrah/loginapp/pkg/config"
 )
 
-// TLS is the tls configuration, required to configure HTTPS endpoint for Loginapp
-type TLS struct {
-	Enabled bool
-	Cert    string
-	Key     string
-}
-
-func (t *TLS) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().Bool("tls-enabled", false, "Enable TLS")
-	cmd.Flags().String("tls-cert", "", "TLS certificate path")
-	cmd.Flags().String("tls-key", "", "TLS private key path")
+// KubeUserInfo contains required user information
+// for OIDC authentication
+type KubeUserInfo struct {
+	IDToken       string
+	RefreshToken  string
+	RedirectURL   string
+	Claims        interface{}
+	UsernameClaim string
+	AppConfig     *config.App
 }

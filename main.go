@@ -18,9 +18,9 @@
 package main
 
 import (
-	"github.com/fydrah/loginapp/internal/app/loginapp"
+	"github.com/fydrah/loginapp/cmd"
 )
 
 func main() {
-	loginapp.Execute()
+	cmd.Execute()
 }

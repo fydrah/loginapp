@@ -14,10 +14,10 @@
 
 package config
 
-// Cluster describes a kubernetes cluster
+// Cluster describes a Kubernetes cluster
 type Cluster struct {
 	Name                  string
 	Server                string
-	InsecureSkipTLSVerify bool
-	CertificateAuthority  string
+	InsecureSkipTLSVerify bool   `mapstructure:"insecure-skip-tls-verify"`
+	CertificateAuthority  string `mapstructure:"certificate-authority"`
 }

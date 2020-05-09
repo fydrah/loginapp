@@ -13,14 +13,13 @@
 // limitations under the License.
 // Some code comes from @ericchiang (Dex - CoreOS)
 
-package loginapp
+package server
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 
+	"github.com/gobuffalo/packr/v2"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -30,17 +29,7 @@ import (
 // used by kubernetes healthchecks)
 // 200: OK, 500 otherwise
 func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// Check if provider is setup
-	if s.provider == nil {
-		log.Debug("provider is not yet setup or unavailable")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
-	}
-	// Check if our application can still contact the provider
-	wellKnown := strings.TrimSuffix(s.config.OIDC.Issuer.URL, "/") + "/.well-known/openid-configuration"
-	_, err := s.client.Head(wellKnown)
-	if err != nil {
-		log.Debugf("error while checking provider access: %v", err)
+	if !s.client.Healthz() {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
@@ -48,20 +37,29 @@ func (s *Server) HandleGetHealthz(w http.ResponseWriter, r *http.Request, _ http
 	w.WriteHeader(http.StatusOK)
 }
 
-// HandleLogin redirect to
-// our IdP
+// HandleLogin redirects client to the IdP
 func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	http.Redirect(w, r, s.PrepareCallbackURL(), http.StatusSeeOther)
+	http.Redirect(w, r, s.client.AuthCodeURL(r, s.Config.Secret), http.StatusSeeOther)
 }
 
-// HandleGetCallback serves
-// callback requests (from our IdP)
+// HandleGetCallback serves callback requests from the IdP
 func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	kc, err := s.ProcessCallback(w, r)
 	if err != nil {
-		log.Errorf("error handling cli callback: %v", err)
+		log.Errorf("error handling callback: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
-	var tokenTmpl = template.Must(template.ParseFiles(fmt.Sprintf("%v/token.html", s.config.Web.TemplatesDir)))
+
+	tBox := packr.New("templates", "../../web/templates")
+	// Get the string representation of a file, or an error if it doesn't exist:
+	tokenTmplStr, err := tBox.FindString("token.html")
+	if err != nil {
+		log.Errorf("template loading failed: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	var tokenTmpl = template.New("token")
+	tokenTmpl.Parse(tokenTmplStr)
 	s.RenderTemplate(w, tokenTmpl, kc)
 }

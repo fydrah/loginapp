@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package loginapp
+package server
 
 import (
 	"fmt"
@@ -32,26 +32,28 @@ const (
 )
 
 var (
+	// TotalRequestCounter is the total number of http request
 	TotalRequestCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: MetricsPrefix + "request_total",
 		Help: "The total number of http request",
 	}, []string{"code", "method"})
 
+	// RequestDuration is the duration of http request in seconds
 	RequestDuration = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: MetricsPrefix + "request_duration",
 		Help: "Duration of http request in seconds",
 	}, []string{"code", "method"})
 )
 
-func prometheusRouter() *httprouter.Router {
-	pr := httprouter.New()
-	pr.Handler("GET", "/metrics", promhttp.Handler())
-	return pr
-}
-
 // PrometheusMetrics setup prometheus metrics exporter
 func PrometheusMetrics(port int) error {
-	if err := fmt.Errorf("%v", http.ListenAndServe(fmt.Sprintf(":%v", port), LoggingHandler(prometheusRouter()))); err != nil {
+	pr := func() *httprouter.Router {
+		r := httprouter.New()
+		r.Handler("GET", "/metrics", promhttp.Handler())
+		return r
+	}
+
+	if err := fmt.Errorf("%v", http.ListenAndServe(fmt.Sprintf(":%v", port), LoggingHandler(pr()))); err != nil {
 		return err
 	}
 	return nil

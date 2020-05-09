@@ -11,21 +11,33 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Some code comes from @ericchiang (Dex - CoreOS)
 
-package loginapp
+package config
 
 import (
-	"github.com/fydrah/loginapp/internal/app/loginapp/config"
+	log "github.com/sirupsen/logrus"
 )
 
-// KubeUserInfo contains all values
-// needed by a user for OIDC authentication
-type KubeUserInfo struct {
-	IDToken       string
-	RefreshToken  string
-	RedirectURL   string
-	Claims        interface{}
-	UsernameClaim string
-	AppConfig     *config.App
+// Check is a configuration check
+// used by check function
+type Check struct {
+	FailedCondition bool
+	Message         string
+	DefaultAction   func()
+}
+
+// Check checks if the check DefaultAction fails or not
+// Return true if check pass
+// Return false if check fails
+func (c *Check) Check() bool {
+	if c.FailedCondition {
+		if c.DefaultAction != nil {
+			c.DefaultAction()
+			log.Info(c.Message)
+		} else {
+			log.Error(c.Message)
+		}
+		return false
+	}
+	return true
 }
