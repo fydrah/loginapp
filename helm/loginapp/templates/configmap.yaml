@@ -1,0 +1,10 @@
+{{- $config := fromYaml (include "loginapp.configuration" .) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "loginapp.fullname" . }}
+  labels:
+    {{- include "loginapp.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+{{ toYaml (mergeOverwrite $config .Values.configOverwrites) | nindent 4 }}

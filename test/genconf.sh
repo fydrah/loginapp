@@ -209,3 +209,4 @@ EOF
 ### Get Kubernetes certificate authority
 echo "Get Kubernetes certificate authority (${CURR_DIR}/generated/ssl/ca.crt)"
 kubectl config view --minify --flatten  -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d > ${CURR_DIR}/generated/ssl/ca.crt
+kubectl -n kube-system create configmap root-ca --from-file=ca.crt=${CURR_DIR}/generated/ssl/ca.crt

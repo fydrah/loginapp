@@ -1,0 +1,122 @@
+# Default values for loginapp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image: quay.io/fydrah/loginapp:3.0.0
+imagePullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 5555
+
+  nodePort:
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# additionnal env vars
+env: {}
+#  LOGINAPP_XXXXXX: "value"
+
+config:
+  # application name, defaults to Release name
+  name:
+  # if empty, generate a random string
+  # please setup a real secret otherwise helm will generate
+  # a new secret at each deployment
+  secret:
+  clientID: "loginapp"
+  clientSecret:
+  # if empty, defaults to:
+  # 1. '{{ .Values.ingress.hosts[0].host }}/callback' if 'ingress.enabled: true' and 'ingress.hosts[0]' exists
+  # 2. '{{ .Release.Name }}.{{ .Release.Namespace }}.svc:5555/callback'
+  clientRedirectURL:
+  # configMap containing the root CA
+  issuerRootCA:
+    # configMap name. This configMap must exist
+    configMap: root-ca
+    # key inside the configMap
+    key: ca.crt
+  issuerURL: "https://dex.example.org:32000"
+  tls:
+    enabled: false
+    # if empty and 'tls.enabled: true', generate self signed certificates
+    # if not empty, use the kubernetes secret 'secretName' (type: kubernetes.io/tls)
+    secretName:
+    # used for the selfsigned certificate
+    ## DNS names (ex: loginapp.172.17.0.2.nip.io)
+    altnames: []
+    ##  IPs
+    ips: []
+  clusters: []
+  #  - name: myfakecluster
+  #    server: https://myfakecluster.org
+  #    certificate-authority: |
+  #      -----BEGIN CERTIFICATE-----
+  #      MIIC/zCCAeegAwIBAgIULkYvGJPRl50tMoVE4BNM0laRQncwDQYJKoZIhvcNAQEL
+  #      BQAwDzENMAsGA1UEAwwEbXljYTAeFw0xOTAyMTgyMjA5NTJaFw0xOTAyMjgyMjA5
+  #      NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+  #      -----END CERTIFICATE-----
+  #    insecure-skip-tls-verify: false
+
+# configuration overrides, this is a free configuration merged
+# with the previous generated configuration 'config'. Use this
+# to add or overwrites values.
+configOverwrites: {}
+#  oidc:
+#    extraScopes:
+#      - groups
