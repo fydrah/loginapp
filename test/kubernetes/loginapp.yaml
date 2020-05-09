@@ -29,6 +29,7 @@ spec:
           - "serve"
           - "-c"
           - "/app/config.yaml"
+          - "-v"
         env:
           - name: LOGINAPP_NAME
             value: "Kubernetes Auth (override by env)"

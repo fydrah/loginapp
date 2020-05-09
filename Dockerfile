@@ -10,9 +10,7 @@ FROM scratch
 ARG REPO=github.com/fydrah/loginapp
 LABEL maintainer="Flavien Hardy <flav.hardy@gmail.com>"
 
-COPY --from=build /go/src/${REPO}/build/loginapp-static /loginapp
-COPY --from=build /go/src/${REPO}/web/assets /web/assets
-COPY --from=build /go/src/${REPO}/web/templates /web/templates
+COPY --from=build /go/src/${REPO}/build/loginapp /loginapp
 
 ENTRYPOINT ["/loginapp"]
 CMD [""]

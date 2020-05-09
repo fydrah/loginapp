@@ -4,3 +4,4 @@ vendor/
 build/*
 test/kubernetes/generated
 test/generated
+*packr.go

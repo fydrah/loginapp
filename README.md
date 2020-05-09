@@ -49,7 +49,7 @@ Flags:
 ## Configuration
 
 ```
-# AppName
+# Application name
 # default: mandatory
 name: "Kubernetes Auth"
 # Bind IP and port (format: "IP:PORT")
@@ -103,14 +103,6 @@ tls:
   # Key location
   # default: mandatory if tls.enabled is true
   key: example/ssl/key.pem
-# Logging configuration
-log:
-  # Loglevel: debug|info|warning|error|fatal|panic
-  # default: info
-  level: debug
-  # Log format: json|text
-  # default: json
-  format: json
 # Configure the web behavior
 webOutput:
   # ClientID to output (useful for cross_client)
@@ -121,9 +113,6 @@ webOutput:
   mainUsernameClaim: email
   # Assets directory
   # default: ${pwd}/assets
-  assetsDir: /assets
-  # Skip main page of login app
-  # default: false
 # Prometheus exporter configuration
 prometheus:
   # Port to use. Metrics are available at
@@ -198,31 +187,55 @@ Setup steps:
 
     ```
     $ test/kubernetes/kindup.sh
-    [...]
-    Now you can run:
-
-    test/kubernetes/genconf.sh 172.17.0.2
+    $ kubectl get node
+    NAME                     STATUS   ROLES    AGE   VERSION
+    loginapp-control-plane   Ready    master   25m   v1.17.0
     ```
 
 2. Generate Dex & Loginapp certificates and configuration for the dev env:
 
     ```
-    # "172.17.0.2" is the IP of the kind control plane container
-    # If you lost it, run:
-    # "docker inspect loginapp-control-plane -f '{{ .NetworkSettings.Networks.bridge.IPAddress }}"
-    $ test/kubernetes/genconf.sh 172.17.0.2
+    $ test/genconf.sh
     [...]
     Creating TLS secret for loginapp
     Generating dex and loginapp configurations
+    [...]
     ```
 
 3. Launch skaffold:
 
+  * For local dev, launch just dex:
+
     ```
-    $ skaffold run
+    # Deploy dex
+    $ skaffold run -p dex
     ```
 
-4. To access loginapp UI, go to https://loginapp.${NODE_IP}.nip.io:32001, where **NODE_IP** is the IP of the kind control plane container. Default user/password configured by Dex is:
+  * To test kubernetes deployment, launch dex and loginapp:
+
+    ```
+    # Deploy dex and loginapp
+    $ skaffold run -p dex,loginapp
+    ```
+
+4. [local] Compile and run loginapp:
+
+    ```
+    $ make
+    # A default configurationn is generated at test/generated/loginapp-config-manual.yaml
+    $ ./build/loginapp -v serve [-c test/generated/loginapp-config-manual.yaml]
+    [...]
+    {"level":"info","msg":"export metric on http://0.0.0.0:9090","time":"2020-04-28T18:19:19+02:00"}
+    {"level":"info","msg":"listening on https://0.0.0.0:8443","time":"2020-04-28T18:19:19+02:00"}
+    [...]
+    ```
+
+5. Access loginapp UI:
+
+    * For local dev, access URL will be: https://loginapp.127.0.0.1.nip.io:8443
+    * For kubernetes test, access URL will be: https://loginapp.${NODE_IP}.nip.io:32001, where **NODE_IP** is the IP of the kind control plane container.
+
+6. Default user/password configured by Dex is:
 
     * User: admin@example.com
     * Password: password

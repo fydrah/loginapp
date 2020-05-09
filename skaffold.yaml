@@ -2,15 +2,24 @@ apiVersion: skaffold/v2beta1
 kind: Config
 metadata:
   name: loginapp
-build:
-  artifacts:
-  - image: quay.io/fydrah/loginapp
-deploy:
-  kubectl:
-    manifests:
-    - test/kubernetes/generated/dex-certs.yaml
-    - test/kubernetes/generated/dex-config.yaml
-    - test/kubernetes/dex.yaml
-    - test/kubernetes/generated/loginapp-certs.yaml
-    - test/kubernetes/generated/loginapp-config.yaml
-    - test/kubernetes/loginapp.yaml
+build: {}
+deploy: {}
+profiles:
+- name: dex
+  deploy:
+    kubectl:
+      manifests:
+      - test/kubernetes/generated/dex-certs.yaml
+      - test/kubernetes/generated/dex-config.yaml
+      - test/kubernetes/dex.yaml
+- name: loginapp
+  build:
+    artifacts:
+    - image: quay.io/fydrah/loginapp
+  deploy:
+    kubectl:
+      manifests:
+      - test/kubernetes/generated/loginapp-certs.yaml
+      - test/kubernetes/generated/loginapp-config.yaml
+      - test/kubernetes/loginapp.yaml
+# - name: helm

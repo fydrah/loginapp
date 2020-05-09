@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package loginapp
+package server
 
 import (
-	"net/http"
-
+	"github.com/gobuffalo/packr/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
@@ -26,11 +25,12 @@ func (s *Server) Routes() {
 	s.router.GET("/", s.HandleLogin)
 	s.router.GET("/callback", s.HandleGetCallback)
 	s.router.GET("/healthz", s.HandleGetHealthz)
-	s.router.ServeFiles("/assets/*filepath", http.Dir(s.config.Web.AssetsDir))
+	s.router.ServeFiles("/assets/*filepath", packr.New("assets", "../../web/assets/"))
 	log.Debug("routes loaded")
 }
 
 // PrometheusRoutes setup the prometheus router
-func (s *Server) PromertheusRoutes() {
+func (s *Server) PrometheusRoutes() {
 	s.promrouter.Handler("GET", "/metrics", promhttp.Handler())
+	log.Debug("prometheus routes loaded")
 }

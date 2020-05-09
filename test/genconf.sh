@@ -170,7 +170,7 @@ metadata:
 type: Opaque
 data:
   # original: ZXhhbXBsZS1hcHAtc2VjcmV0
-  LOGINAPP_OIDC_CLIENT_SECRET: WlhoaGJYQnNaUzFoY0hBdGMyVmpjbVYwCg==
+  LOGINAPP_OIDC_CLIENT_SECRET: WlhoaGJYQnNaUzFoY0hBdGMyVmpjbVYw
 EOF
 
 cat <<EOF > ${CURR_DIR}/generated/loginapp-config-manual.yaml
