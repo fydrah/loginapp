@@ -219,7 +219,7 @@ Here are the required configuration for Loginapp:
 Use the configuration key `configOverwrites` to overwrite generated configuration (see: [Configuration](../README.md#Configuration)):
 
 ```yaml
-configOverwrite:
+configOverwrites:
   oidc:
     issuer:
       insecureSkipVerify: true
