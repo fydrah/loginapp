@@ -1,6 +1,6 @@
 {{- if and .Values.config.tls.enabled (not .Values.config.tls.secretName) }}
 {{- $altnames := concat (list (include "loginapp.fullname" .) (print (include "loginapp.fullname" .) "." .Release.Namespace ".svc")) .Values.config.tls.altnames }}
-{{- $cert := genSelfSignedCert (include "loginapp.fullname" .) .Values.config.tls.ips $altnames 365 }}
+{{- $cert := genSelfSignedCert (include "loginapp.fullname" .) .Values.config.tls.altIPs $altnames 365 }}
 apiVersion: v1
 kind: Secret
 metadata:

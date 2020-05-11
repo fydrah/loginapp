@@ -1,0 +1,22 @@
+project:
+  name: Loginapp
+  shortName: loginapp
+  url: https://github.com/fydrah/loginapp
+  description: OIDC authentication helper for Kubernetes
+repository:
+  url: https://does-not-exists
+  name: loginapp
+chart:
+  name: loginapp
+  values: "-- generate from values file --"
+  valuesExample: "-- generate from values file --"
+prerequisites:
+- "Identity Provider configuration (like Dex ou Keycloak)"
+- "`config.secret` must be changed"
+- "`config.clientID`, `config.clientSecret` and `config.clientRedirectURL` must be changed to conform with the application credentials configured on your identity provider"
+- "`config.issuerURL` is the full URL before `/.well-known/openid-configuration` path (ex: for `https://dex.example.org/dex/.well-known/openid-configuration` it is `https://dex.example.org/dex`"
+- "`config.issuerRootCA.configMap` must be created before deploying loginapp. The configMap must contain the plain issuer root CA in the key `config.issuerRootCA.key`"
+- "If you setup an Ingress with SSL offloading, you must disable TLS for loginapp with `config.tls.enabled: false`"
+release:
+  name: loginapp
+  namespace: auth

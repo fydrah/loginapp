@@ -196,13 +196,15 @@ func (c *Client) VerifierSetup() {
 
 // TLSSetup setup tls transport for the client
 func (c *Client) TLSSetup() error {
-	tlsConfig := tls.Config{RootCAs: x509.NewCertPool()}
-	rootCABytes, err := ioutil.ReadFile(c.Config.Issuer.RootCA)
-	if err != nil {
-		return fmt.Errorf("failed to read root-ca: %v", err)
-	}
-	if !tlsConfig.RootCAs.AppendCertsFromPEM(rootCABytes) {
-		return fmt.Errorf("no certs found in root CA file %q", c.Config.Issuer.RootCA)
+	tlsConfig := tls.Config{RootCAs: x509.NewCertPool(), InsecureSkipVerify: c.Config.Issuer.InsecureSkipVerify}
+	if !c.Config.Issuer.InsecureSkipVerify {
+		rootCABytes, err := ioutil.ReadFile(c.Config.Issuer.RootCA)
+		if err != nil {
+			return fmt.Errorf("failed to read root-ca: %v", err)
+		}
+		if !tlsConfig.RootCAs.AppendCertsFromPEM(rootCABytes) {
+			return fmt.Errorf("no certs found in root CA file %q", c.Config.Issuer.RootCA)
+		}
 	}
 	c.HTTPClient = &http.Client{
 		Transport: &http.Transport{

@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "loginapp.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       {{- include "loginapp.selectorLabels" . | nindent 6 }}
@@ -44,9 +44,15 @@ spec:
             - serve
             - -c
             - /cfg/config.yaml
+            {{- range $arg := .Values.args }}
+            - "{{ $arg }}"
+            {{- end }}
           ports:
             - name: http
               containerPort: 5555
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -63,8 +69,10 @@ spec:
           volumeMounts:
             - name: config
               mountPath: "/cfg"
+            {{- if .Values.config.issuerRootCA.configMap }}
             - name: issuer-ca
               mountPath: "/tls/issuer"
+            {{- end }}
             {{- if .Values.config.tls.enabled }}
             - name: tls
               mountPath: "/tls/server"
@@ -73,12 +81,14 @@ spec:
       - name: config
         configMap:
           name: {{ include "loginapp.fullname" . }}
+      {{- if .Values.config.issuerRootCA.configMap }}
       - name: issuer-ca
         configMap:
           name: {{ .Values.config.issuerRootCA.configMap }}
           items:
             - key: {{ .Values.config.issuerRootCA.key }}
               path: ca.crt
+      {{- end }}
       {{- if .Values.config.tls.enabled }}
       - name: tls
         secret:

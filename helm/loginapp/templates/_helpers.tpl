@@ -67,7 +67,7 @@ Generate redirectURL
 */}}
 {{- define "loginapp.redirecturl" -}}
 {{-     if and .Values.ingress.enabled (index .Values.ingress.hosts 0) -}}
-{{-         if .Values.ingress.tls -}}https{{- else -}}http{{- end -}}://{{- with (index .Values.ingress.hosts 0) }}{{ .t }}{{- end -}}
+{{-         if .Values.ingress.tls -}}https{{- else -}}http{{- end -}}://{{- with (index .Values.ingress.hosts 0) }}{{ .host }}{{- end -}}
 {{-     else -}}
 {{-         if .Values.config.tls.enabled -}}https{{- else -}}http{{- end -}}://{{ default (include "loginapp.fullname" .) }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}
 {{-     end -}}
@@ -85,8 +85,12 @@ oidc:
     id: {{ .Values.config.clientID }}
     redirectURL: {{ default (include "loginapp.redirecturl" .) .Values.config.clientRedirectURL }}
   issuer:
+    {{- if .Values.config.issuerRootCA.configMap }}
     rootCA: "/tls/issuer/ca.crt"
+    {{- end }}
     url: {{ .Values.config.issuerURL }}
+    insecureSkipVerify: {{ .Values.config.issuerInsecureSkipVerify }}
+  offlineAsScope: {{ .Values.config.refreshToken }}
 tls:
   enabled: {{ .Values.config.tls.enabled }}
   cert: /tls/server/tls.crt

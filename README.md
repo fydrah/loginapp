@@ -7,13 +7,20 @@
 
 **Web application for Kubernetes CLI configuration with OIDC**
 
-The code base of this repository use some source code from the original
-[dexidp/dex repository](https://github.com/dexidp/dex/tree/master/cmd/example-app).
-
 ## Usage
 
 ```shell
-Run loginapp application
+
+Perform configuration checks and run Loginapp.
+
+Loginapp supports three configuration formats:
+* Configuration file: '--config' flag
+* Flags: '--oidc-xxx' flags for example
+* Environment vars: each flag provides an environment var with
+  'LOGINAPP_' prefix.
+  Ex: '--oidc-client-secret' --> 'LOGINAPP_OIDC_CLIENT_SECRET'
+
+Configuration precedence: flags > environment vars > configuration file
 
 Usage:
   loginapp serve [flags]
@@ -22,41 +29,45 @@ Flags:
   -c, --config string                            Configuration file
   -h, --help                                     help for serve
   -l, --listen string                            Listen interface and port (default "0.0.0.0:8080")
-      --log-format string                        Log format ([json]|text) (default "json")
-      --log-level string                         Log level (debug|[info]|warning|error) (default "info")
       --metrics-port int                         Port to export metrics (default 9090)
   -n, --name string                              Application name. Used for web title. (default "Loginapp")
       --oidc-client-id string                    Client ID (default "loginapp")
       --oidc-client-redirecturl string           Redirect URL for callback. This must be the same than the one provided to the IDP. Must end with '/callback'
       --oidc-client-secret string                Client secret
-      --oidc-crossclients strings                Issue token on behalf of this list of client IDs. Format: 'CROSS_CLIENTID1,CROSS_CLIENTID2
+      --oidc-crossclients strings                Issue token on behalf of this list of client IDs
       --oidc-extra-authcodeopts stringToString   K/V list of extra authorisation code to include in token request (default [])
       --oidc-extra-scopes strings                List of extra scopes to ask
       --oidc-issuer-rootca string                Certificate authority of the issuer
       --oidc-issuer-url string                   Full URL of issuer before '/.well-known/openid-configuration' path
       --oidc-offlineasscope                      Issue a refresh token for offline access
+  -s, --secret string                            Application secret. Must be identical across all loginapp server replicas (this is not the OIDC Client secret)
       --tls-cert string                          TLS certificate path
       --tls-enabled                              Enable TLS
       --tls-key string                           TLS private key path
-      --web-assertsdir string                    Custom asserts directory
       --web-mailclientid string                  Application client ID (default "loginapp")
       --web-mainusernameclaim string             Claim to use for username (depends on IDP available claims (default "email")
-      --web-templatedir string                   Custom templates directory
 ```
 
 
 
 ## Configuration
 
-```
+```yaml
 # Application name
 # default: mandatory
 name: "Kubernetes Auth"
+
 # Bind IP and port (format: "IP:PORT")
 # default: mandatory
 listen: "0.0.0.0:5555"
+
+# Application secret. Must be identical across
+# all loginapp server replicas ( /!\ this is not the OIDC Client secret)
+secret: REDACTED
+
 # OIDC configuration
 oidc:
+
   # Client configuration
   client:
     # Application ID
@@ -64,34 +75,45 @@ oidc:
     id: "loginapp"
     # Application Secret
     # default: mandatory
-    secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+    secret: REDACTED
     # Application Redirect URL
+    # must end with "/callback"
     # default: mandatory
     redirectURL: "https://127.0.0.1:5555/callback"
+
   # Issuer configuration
   issuer:
     # Location of issuer root CA certificate
-    # default: mandatory
+    # default: mandatory if insecureSkipVerify is false
     rootCA: "example/ssl/ca.pem"
     # Issuer URL
     # default: mandatory
     url: "https://dex.example.com:5556"
-  # Extra scopes
-  # default: []
-  extraScopes:
-    - groups
-  # Extra auth code options
-  # Some extra auth code options are required for ADFS compatibility (ex: resource).
-  # See: https://docs.microsoft.com/fr-fr/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers
-  # default: {}
-  extraAuthCodeOpts:
-    resource: XXXXX
+    # Skip certificate validation
+    # Default: false
+    insecureSkipVerify: false
+
+  # OIDC extra configuration
+  extra:
+    # OIDC Scopes in addition to
+    # "openid", "profile", "email", "groups"
+    # default: []
+    scopes: []
+
+    # Extra auth code options
+    # Some extra auth code options are required for ADFS compatibility (ex: resource).
+    # See: https://docs.microsoft.com/fr-fr/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers
+    # default: {}
+    authCodeOpts:
+      resource: XXXXX
+
   # Enable offline scope
   # default: false
   offlineAsScope: true
   # Request token on behalf of other clients
   # default: []
   crossClients: []
+
 # Tls support
 tls:
   # Enable tls termination
@@ -103,22 +125,23 @@ tls:
   # Key location
   # default: mandatory if tls.enabled is true
   key: example/ssl/key.pem
+
 # Configure the web behavior
-webOutput:
+web:
   # ClientID to output (useful for cross_client)
   # default: value of 'oidc.client.id'
   mainClientID: loginapp
   # Claims to use for kubeconfig username.
-  # default: name
+  # default: email
   mainUsernameClaim: email
-  # Assets directory
-  # default: ${pwd}/assets
-# Prometheus exporter configuration
-prometheus:
+
+# Metrics configuration
+metrics:
   # Port to use. Metrics are available at
   # http://IP:PORT/metrics
   # default: 9090
   port: 9090
+
 # Clusters list for CLI configuration
 clusters:
   - name: mycluster
@@ -132,25 +155,13 @@ clusters:
     insecure-skip-tls-verify: false
 ```
 
-Two main examples are available:
-* [Full configuration example](./example/config-loginapp-full.yaml) (each config option is set)
-* [Minimal configuration example](./example/config-loginapp-minimal.yaml) (only mandatory options)
+## Deployment
 
-## Kubernetes
+* Run the binary for [development purpose](#Dev)
+* Deploy with [helm](./helm/loginapp):
 
-You have many ways to run loginapp:
-
-* In a container:
-
-  * On top of a Kubernetes cluster
-  * As a standalone container
-
-* Just with the binary:
-
-  * As a daemon (systemd service)
-  * Run binary for [development purpose](##Dev)
-
-We advice to run loginapp on top of a kubernetes cluster, as a [Deployment](./deployments/kubernetes/as_deployment/) or a [DaemonSet](./deployments/kubernetes/as_daemonset/)
+    - Example for testing: see [./test/genconf.sh](./test/genconf.sh) file and [Dev](#Dev) section
+    - [Prepare your deployment](./docs/deploy.md)
 
 ## Dev
 
@@ -185,7 +196,7 @@ Setup steps:
 
 1. Launch a kind cluster:
 
-    ```
+    ```shell
     $ test/kubernetes/kindup.sh
     $ kubectl get node
     NAME                     STATUS   ROLES    AGE   VERSION
@@ -194,7 +205,7 @@ Setup steps:
 
 2. Generate Dex & Loginapp certificates and configuration for the dev env:
 
-    ```
+    ```shell
     $ test/genconf.sh
     [...]
     Creating TLS secret for loginapp
@@ -206,21 +217,28 @@ Setup steps:
 
   * For local dev, launch just dex:
 
-    ```
+    ```shell
     # Deploy dex
     $ skaffold run -p dex
     ```
 
   * To test kubernetes deployment, launch dex and loginapp:
 
-    ```
+    ```shell
     # Deploy dex and loginapp
     $ skaffold run -p dex,loginapp
     ```
 
+  * Test helm deployment:
+
+    ```shell
+    # Deploy dex and loginapp
+    $ skaffold run -p helm
+    ```
+
 4. [local] Compile and run loginapp:
 
-    ```
+    ```shell
     $ make
     # A default configurationn is generated at test/generated/loginapp-config-manual.yaml
     $ ./build/loginapp -v serve [-c test/generated/loginapp-config-manual.yaml]
@@ -239,3 +257,9 @@ Setup steps:
 
     * User: admin@example.com
     * Password: password
+
+
+## MISC
+
+The code base of this repository uses some source code from the original
+[dexidp/dex repository](https://github.com/dexidp/dex/tree/master/cmd/example-app).
