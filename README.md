@@ -134,6 +134,14 @@ web:
   # Claims to use for kubeconfig username.
   # default: email
   mainUsernameClaim: email
+  # Kubeconfig output format
+  kubeconfig:
+    # Change default cluster for kubeconfig context
+    # Default: first cluster name in `clusters`
+    defaultCluster: mycluster
+    # Change default namespace for kubeconfig contexts
+    # Default: default
+    defaultNamespace: default
 
 # Metrics configuration
 metrics:

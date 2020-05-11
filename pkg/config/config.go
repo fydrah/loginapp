@@ -73,6 +73,12 @@ func (a *App) Init() error {
 		{a.Web.MainUsernameClaim == "", "no output web.mainUsernameClaim specified, using default: 'name'", func() {
 			a.Web.MainUsernameClaim = "name"
 		}},
+		{len(a.Clusters) > 0 && a.Web.Kubeconfig.DefaultCluster == "", "No default cluster name for kubeconfig context, using first cluster name available, ", func() {
+			a.Web.Kubeconfig.DefaultCluster = a.Clusters[0].Name
+		}},
+		{len(a.Clusters) == 0 && a.Web.Kubeconfig.DefaultCluster == "", "No cluster defined, setting default cluster output to none", func() {
+			a.Web.Kubeconfig.DefaultCluster = "none"
+		}},
 		{a.Metrics.Port == 0, "no metrics.port setup, using default: 9090", func() {
 			a.Metrics.Port = 9090
 		}},

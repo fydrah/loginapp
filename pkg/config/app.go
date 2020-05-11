@@ -127,10 +127,24 @@ func (t *TLS) AddFlags(cmd *cobra.Command) {
 type Web struct {
 	MainUsernameClaim string
 	MainClientID      string
+	Kubeconfig        WebKubeconfig
 }
 
 // AddFlags init web flags
 func (w *Web) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("web-mainusernameclaim", "email", "Claim to use for username (depends on IDP available claims")
 	cmd.Flags().String("web-mainclientid", "", "Application client ID")
+	w.Kubeconfig.AddFlags(cmd)
+}
+
+// WebKubeconfig manages default web output for kubeconfig
+type WebKubeconfig struct {
+	DefaultCluster   string
+	DefaultNamespace string
+}
+
+// AddFlags init web kubeconfig flags
+func (wk *WebKubeconfig) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().String("web-kubeconfig-defaultcluster", "", "Default cluster name to use for full kubeconfig output")
+	cmd.Flags().String("web-kubeconfig-defaultnamespace", "default", "Default namespace to use for full kubeconfig output")
 }
