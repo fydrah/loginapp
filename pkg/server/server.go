@@ -119,6 +119,7 @@ func (s *Server) RenderTemplate(w http.ResponseWriter, tmpl *template.Template, 
 	default:
 		// An error with the underlying write, such as the connection being
 		// dropped. Ignore for now.
+		log.Errorf("error rendering template %s: %s", tmpl.Name(), err)
 	}
 }
 

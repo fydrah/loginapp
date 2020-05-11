@@ -7,6 +7,8 @@
   "assets/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href=
   "assets/css/loginapp.css">
+  <script src="assets/js/loginapp.js">
+  </script>
   <script src="assets/js/jquery.min.js">
   </script>
   <script src="assets/js/prism.min.js">
@@ -29,7 +31,8 @@
     <div class="col-md-2">
     <ul class="nav nav-stacked" role="tablist">
       <li role="presentation" class="active"><a data-toggle="tab" href="#kubectl">Kubectl</a></li>
-      <li role="presentation"><a data-toggle="tab" href="#kubeconfig">Kubeconfig</a></li>
+      <li role="presentation"><a data-toggle="tab" href="#kubeconfig">Credential Kubeconfig</a></li>
+      <li role="presentation"><a data-toggle="tab" href="#kubeconfig-full">Full Kubeconfig</a></li>
       <li role="presentation"><a data-toggle="tab" href="#clusters">Clusters</a></li>
     </ul>
     </div>
@@ -62,11 +65,63 @@
           <label>Copy/paste this in your ~/.kube/config file</label>
         </div>
         <div class="panel-body">
+          <button class="btn btn-secondary" title="Download" onclick="kubeconfigDownload('kubeconfig-code')">Download</button>
           <div class="code-box-copy">
             <button class="code-box-copy__btn" title=
             "Copy" type="button" data-clipboard-target="#kubeconfig-code">
             </button>
             <pre><code id="kubeconfig-code" class="code-box-copy">- name: {{ .UsernameClaim }}
+  user:
+    auth-provider:
+      config:
+{{- range $k,$v := .AppConfig.OIDC.Extra.AuthCodeOpts }}
+        {{ $k }}: "{{ $v }}"
+{{- end }}
+        idp-issuer-url: {{ .Claims.iss }}
+        client-id: {{ .AppConfig.OIDC.Client.ID }}
+        id-token: {{ .IDToken }}
+{{- if ne .RefreshToken "" }}
+        client-secret: {{ .AppConfig.OIDC.Client.Secret }}
+        refresh-token: {{ .RefreshToken }}
+{{- end }}
+      name: oidc</code></pre>
+          </div>
+        </div>
+      </div>
+      <div id="kubeconfig-full" class="tab-pane fade panel panel-default">
+        <div class="panel-heading">
+          <label>Copy/paste this in your ~/.kube/config file</label>
+        </div>
+        <div class="panel-body">
+          <button class="btn btn-secondary" title="Download" onclick="kubeconfigDownload('kubeconfigfull-code')">Download</button>
+          <div class="code-box-copy">
+            <button class="code-box-copy__btn" title=
+            "Copy" type="button" data-clipboard-target="#kubeconfigfull-code">
+            </button>
+            <pre><code id="kubeconfigfull-code" class="code-box-copy">apiVersion: v1
+kind: Config
+preferences: {}
+current-context: {{ .AppConfig.Web.Kubeconfig.DefaultCluster }}/{{ .UsernameClaim }}
+contexts:
+{{- $usernameclaim := .UsernameClaim }}
+{{- $defaultNS := .AppConfig.Web.Kubeconfig.DefaultNamespace }}
+{{- range $cluster := .AppConfig.Clusters }}
+- name: {{ $cluster.Name }}/{{ $usernameclaim }}
+  context:
+    user: {{ $usernameclaim }}
+    cluster: {{ $cluster.Name }}
+    namespace: {{ $defaultNS }}
+{{- end }}
+clusters:
+{{- range $cluster := .AppConfig.Clusters }}
+- name: {{ $cluster.Name }}
+  cluster:
+    server: {{ $cluster.Server }}
+    certificate-authority-data: {{ $cluster.Base64Cert }}
+    insecure-skip-tls-verify: {{ $cluster.InsecureSkipTLSVerify }}
+{{- end }}
+users:
+- name: {{ .UsernameClaim }}
   user:
     auth-provider:
       config:
@@ -125,7 +180,6 @@ kubectl config set-context {{ $cluster.Name }}/{{ $usernameclaim }} --user={{ $u
     </form>
   </center>
   </div>
-
   <script>
     (function($) {
       $('.code-box-copy').codeBoxCopy();

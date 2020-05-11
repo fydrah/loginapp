@@ -14,10 +14,17 @@
 
 package config
 
+import "encoding/base64"
+
 // Cluster describes a Kubernetes cluster
 type Cluster struct {
 	Name                  string
 	Server                string
 	InsecureSkipTLSVerify bool   `mapstructure:"insecure-skip-tls-verify"`
 	CertificateAuthority  string `mapstructure:"certificate-authority"`
+}
+
+// Base64Cert convert a plain text certificate to a base64 encoded string
+func (c *Cluster) Base64Cert() string {
+	return base64.StdEncoding.EncodeToString([]byte(c.CertificateAuthority))
 }
