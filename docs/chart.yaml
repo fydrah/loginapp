@@ -4,8 +4,8 @@ project:
   url: https://github.com/fydrah/loginapp
   description: OIDC authentication helper for Kubernetes
 repository:
-  url: https://does-not-exists
-  name: loginapp
+  url: https://registry.fhardy.fr/chartrepo/stable
+  name: fhardy-stable
 chart:
   name: loginapp
   values: "-- generate from values file --"
