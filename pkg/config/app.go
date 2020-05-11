@@ -75,14 +75,16 @@ func (oc *OIDCClient) AddFlags(cmd *cobra.Command) {
 
 // OIDCIssuer is the issuer OpenID configuration
 type OIDCIssuer struct {
-	URL    string
-	RootCA string
+	URL                string
+	RootCA             string
+	InsecureSkipVerify bool
 }
 
 // AddFlags init oidc issuer flags
 func (oi *OIDCIssuer) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("oidc-issuer-url", "", "Full URL of issuer before '/.well-known/openid-configuration' path")
 	cmd.Flags().String("oidc-issuer-rootca", "", "Certificate authority of the issuer")
+	cmd.Flags().Bool("oidc-issuer-insecureskipverify", false, "Skip issuer certificate validation (usefull for testing). It is not advised to use this option in production")
 }
 
 // OIDCIssuer is the extra OpenID configuration supported
@@ -130,5 +132,5 @@ type Web struct {
 // AddFlags init web flags
 func (w *Web) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("web-mainusernameclaim", "email", "Claim to use for username (depends on IDP available claims")
-	cmd.Flags().String("web-mailclientid", "loginapp", "Application client ID")
+	cmd.Flags().String("web-mainclientid", "", "Application client ID")
 }

@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "loginapp.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ if .Values.config.tls.enabled }}https{{ else }}http{{ end }}://{{ include "loginapp.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never

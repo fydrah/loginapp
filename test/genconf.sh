@@ -5,7 +5,7 @@
 CURR_DIR=$(dirname $0)
 NODE_IP=$(docker inspect loginapp-control-plane -f '{{ .NetworkSettings.Networks.bridge.IPAddress }}')
 
-mkdir -p ${CURR_DIR}/generated/ssl ${CURR_DIR}/kubernetes/generated
+mkdir -p ${CURR_DIR}/generated/ssl ${CURR_DIR}/kubernetes/generated ${CURR_DIR}/helm/generated
 
 for cert in dex loginapp
 do
@@ -206,7 +206,84 @@ clusters:
     insecure-skip-tls-verify: false
 EOF
 
+cat <<EOF > ${CURR_DIR}/helm/generated/overrides.yaml
+replicas: 2
+service:
+  type: NodePort
+  nodePort: 32001
+args:
+  - "-v"
+config:
+  secret: opdzojferfijcreoo
+  clientID: loginapp
+  clientSecret: ZXhhbXBsZS1hcHAtc2VjcmV0
+  clientRedirectURL: "https://loginapp.${NODE_IP}.nip.io:32001/callback"
+  issuerURL: "https://dex.${NODE_IP}.nip.io:32000"
+  # Don't check issuer certificates (self-signed)
+  issuerInsecureSkipVerify: true
+  refreshToken: true
+  tls:
+    # This will generate a self-signed certificate
+    enabled: true
+    altnames:
+      - "loginapp.${NODE_IP}.nip.io"
+  clusters:
+    - name: myfakecluster
+      server: https://myfakecluster.org
+      certificate-authority: |
+        -----BEGIN CERTIFICATE-----
+        MIIC/zCCAeegAwIBAgIULkYvGJPRl50tMoVE4BNM0laRQncwDQYJKoZIhvcNAQEL
+        BQAwDzENMAsGA1UEAwwEbXljYTAeFw0xOTAyMTgyMjA5NTJaFw0xOTAyMjgyMjA5
+        NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+        -----END CERTIFICATE-----
+      insecure-skip-tls-verify: false
+configOverwrites:
+  web:
+    # "name": "admin", "email": admin@example.com
+    mainUsernameClaim: "name"
+dex:
+  enabled: true
+  replicas: 2
+  https: true
+  grpc: false
+  service:
+    type: NodePort
+  ports:
+    web:
+      containerPort: 5556
+      # for service.type: NodePort
+      nodePort: 32000
+      servicePort: 32000
+  certs:
+    web:
+      # This will generate a self-signed certificate
+      create: true
+      altNames:
+      - dex.${NODE_IP}.nip.io
+  config:
+    issuer: https://dex.${NODE_IP}.nip.io:32000
+    staticClients:
+    - id: loginapp
+      redirectURIs:
+      - 'https://loginapp.${NODE_IP}.nip.io:32001/callback'
+      name: 'Loginapp Kube'
+      secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+    - id: loginapp-local
+      redirectURIs:
+      - 'https://loginapp.127.0.0.1.nip.io:8443/callback'
+      name: 'Loginapp local'
+      secret: ZXhhbXBsZS1hcHAtc2VjcmV1
+
+    enablePasswordDB: true
+    staticPasswords:
+    - email: "admin@example.com"
+      # bcrypt hash of the string "password"
+      hash: "\$2a\$10\$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+      username: "admin"
+      userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+EOF
+
 ### Get Kubernetes certificate authority
 echo "Get Kubernetes certificate authority (${CURR_DIR}/generated/ssl/ca.crt)"
 kubectl config view --minify --flatten  -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d > ${CURR_DIR}/generated/ssl/ca.crt
-kubectl -n kube-system create configmap root-ca --from-file=ca.crt=${CURR_DIR}/generated/ssl/ca.crt
+kubectl -n kube-system create configmap root-ca --from-file=ca.crt=${CURR_DIR}/generated/ssl/ca.crt 2>/dev/null

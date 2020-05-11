@@ -2,9 +2,9 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+replicas: 1
 
-image: quay.io/fydrah/loginapp:3.0.0
+image: quay.io/fydrah/loginapp:v3.0.0
 imagePullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -68,40 +68,67 @@ tolerations: []
 
 affinity: {}
 
-# additionnal env vars
+# Additionnal env vars
+# Example:
+#
+#   LOGINAPP_XXXXXX: "value"
 env: {}
-#  LOGINAPP_XXXXXX: "value"
+
+# Additional args
+# Example:
+#
+#   - "-v" # This is for debug logs
+args: []
 
 config:
-  # application name, defaults to Release name
+  # Application name, defaults to Release name
   name:
+  # Application secret
   # if empty, generate a random string
   # please setup a real secret otherwise helm will generate
   # a new secret at each deployment
   secret:
+  # OIDC Client ID
   clientID: "loginapp"
+  # OIDC Client secret
   clientSecret:
+  # OIDC Client redirect URL
+  # This must end with /callback
   # if empty, defaults to:
+  #
   # 1. '{{ .Values.ingress.hosts[0].host }}/callback' if 'ingress.enabled: true' and 'ingress.hosts[0]' exists
   # 2. '{{ .Release.Name }}.{{ .Release.Namespace }}.svc:5555/callback'
   clientRedirectURL:
-  # configMap containing the root CA
-  issuerRootCA:
-    # configMap name. This configMap must exist
-    configMap: root-ca
-    # key inside the configMap
+  # Issuer root CA configMap
+  # ConfigMap containing the root CA
+  # and key to use inside the configMap.
+  # This configMap must exist
+  issuerRootCA: # +doc-gen:break
+    configMap:
     key: ca.crt
+  # Skip issuer certificate validation
+  # This is usefull for testing purpose, but
+  # not recommended in production
+  issuerInsecureSkipVerify: false
+  # Issuer url
   issuerURL: "https://dex.example.org:32000"
+  # Include refresh token in request
+  refreshToken: false
   tls:
-    enabled: false
+    # Enable TLS for deployment
+    enabled: true
+    # Secret name where certificates are stored
     # if empty and 'tls.enabled: true', generate self signed certificates
     # if not empty, use the kubernetes secret 'secretName' (type: kubernetes.io/tls)
     secretName:
-    # used for the selfsigned certificate
-    ## DNS names (ex: loginapp.172.17.0.2.nip.io)
+    # Self singed certificat DNS names
+    # Example:
+    #
+    #   - loginapp.172.17.0.2.nip.io
     altnames: []
-    ##  IPs
-    ips: []
+    # Self signed certificat IPs
+    altIPs: []
+  # List of kubernetes clusters to add on web frontend
   clusters: []
   #  - name: myfakecluster
   #    server: https://myfakecluster.org
@@ -113,10 +140,18 @@ config:
   #      -----END CERTIFICATE-----
   #    insecure-skip-tls-verify: false
 
-# configuration overrides, this is a free configuration merged
+# Configuration overrides, this is a free configuration merged
 # with the previous generated configuration 'config'. Use this
 # to add or overwrites values.
-configOverwrites: {}
+# Example:
+#
 #  oidc:
 #    extraScopes:
 #      - groups
+configOverwrites: {}
+
+# Enable dex deployment
+# See https://github.com/helm/charts/tree/master/stable/dex for
+# more information about available values
+dex:
+  enabled: false

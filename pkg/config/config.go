@@ -46,7 +46,7 @@ func (a *App) Init() error {
 		{a.OIDC.Client.Secret == "", "no oidc.client.secret specified", nil},
 		{a.OIDC.Client.RedirectURL == "", "no oidc.client.redirectURL specified", nil},
 		{a.OIDC.Issuer.URL == "", "no oidc.issuer.url specified", nil},
-		{a.OIDC.Issuer.RootCA == "", "no oidc.issuer.rootCA specified", nil},
+		{!a.OIDC.Issuer.InsecureSkipVerify && a.OIDC.Issuer.RootCA == "", "no oidc.issuer.rootCA specified", nil},
 		{a.TLS.Enabled && a.TLS.Cert == "", "no tls.cert specified", nil},
 		{a.TLS.Enabled && a.TLS.Key == "", "no tls.key specified", nil},
 	}
@@ -76,6 +76,7 @@ func (a *App) Init() error {
 		{a.Metrics.Port == 0, "no metrics.port setup, using default: 9090", func() {
 			a.Metrics.Port = 9090
 		}},
+		{a.OIDC.Issuer.InsecureSkipVerify, "Certificate validation is currently disabled, this is not a recommended behavior for production", nil},
 	}
 	if ok := configCheck(defaultChecks); !ok {
 		log.Info("Non-blocking configuration missing, using defaults")

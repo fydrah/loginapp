@@ -1,0 +1,8 @@
+*.md
+*packr.go
+skaffold.yaml
+build/
+docs/
+helm/
+test/
+vendor/

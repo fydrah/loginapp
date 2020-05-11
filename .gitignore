@@ -4,4 +4,6 @@ vendor/
 build/*
 test/kubernetes/generated
 test/generated
+*Chart.lock
+*charts/
 *packr.go

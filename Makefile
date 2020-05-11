@@ -1,5 +1,5 @@
 # Dirs
-BINDIR			:= build
+BUILDDIR			:= build
 CMDDIR			:= cmd
 
 # Git
@@ -32,12 +32,12 @@ vendor:
 
 .PHONY: build
 build: clean vendor packr2
-	go build -mod=vendor -o $(BINDIR)/loginapp $(GOFLAGS) -ldflags '$(LDFLAGS)' $(GIT_REPOSITORY)
+	go build -mod=vendor -o $(BUILDDIR)/loginapp $(GOFLAGS) -ldflags '$(LDFLAGS)' $(GIT_REPOSITORY)
 
 .PHONY: build-static
 build-static: LDFLAGS += -extldflags "-static"
 build-static: vendor packr2
-	CGO_ENABLED=0 go build -mod=vendor -o $(BINDIR)/loginapp $(GOFLAGS) -ldflags '$(LDFLAGS)' $(GIT_REPOSITORY)
+	CGO_ENABLED=0 go build -mod=vendor -o $(BUILDDIR)/loginapp $(GOFLAGS) -ldflags '$(LDFLAGS)' $(GIT_REPOSITORY)
 
 .PHONY: docker-tmp
 docker-tmp:
@@ -47,7 +47,15 @@ docker-tmp:
 gofmt:
 	go fmt ./...
 
+.PHONY: helmdoc
+helmdoc:
+	chart-doc-gen -d docs/chart.yaml -v=helm/loginapp/values.yaml > ./helm/loginapp/README.md
+
+.PHONY: helmpackage
+helmpackage: helmdoc
+	helm package helm/loginapp -d $(BUILDDIR)
+
 .PHONY: clean
 clean:
-	rm -f $(BINDIR)/loginapp
+	rm -f $(BUILDDIR)/loginapp
 	packr2 clean
