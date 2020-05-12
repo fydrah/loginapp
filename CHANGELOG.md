@@ -6,15 +6,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- More prometheus exports
+- More prometheus metrics
 - More UX improvements
+
+## [v3.0.1] - 2020-05-11
+
+### Added
+
+- Generate a full kubeconfig output based on cluster list
+  Also add 2 configuration options:
+
+  * `web.kubeconfig.defaultCluster`: default cluster name for kubeconfig
+    (defaults to first cluster name in the `clusters` list)
+  * `web.kubeconfig.defaultNamespace`: default namespace for kubeconfig
+    (defaults to "default" by default...)
+
+
+## [v3.0.0] - 2020-05-11
+
+**Warning**
+
+Lot of breaking changes for:
+
+* cli
+* configuration
+
+Please refers to the [README.md](./README.md) for detailed documentation.
+
+### Added
 - Documentation
+- Kind and skaffold dev env
+- You can now override configuration using environment variables:
 
-## [2.X.X] - Unreleased
+  "LOGINAPP_ABC" where ABC is the full path of the variable to override,
+  exemple: LOGINAPP_OIDC_CLIENT_ID=mycustomid will override
+  oidc.client.id key from config (issue #20)
+- Helm deployment
+
 ### Changed
-- Refactor directory structure to follow standards
+- Change directory structure
+- Switch to cobra/viper for CLI
+- User packr for embed assets
+- In order to allow env var overrides, we had to change some variable
+  name. All variables (excluded `clusters` vars) follow a lower camel case
+  convention:
+  * `redirect_url` --> `redirectURL`
+  * `root_ca` --> `rootCA`
+  * `extra_scopes` --> `oidc.extra.scopes`
+  * `extra_auth_code_opts` --> `oidc.extra.authCodeOpts`
+  * `offline_as_scope` --> `oidc.offlineAsScope`
+  * `cross_clients` --> `oidc.crossClients`
+  * `main_username_claim` --> `web.mainUsernameClaim`
+  * `main_client_id` --> `web.mainClientID`
 
-  See: https://github.com/golang-standards/project-layout
+### Removed
+- Remove `dep` as dependency manager, use go mod instead
+- Remove all vendor dependencies from repository
+- Assets are now included with the binary, these options are removed:
+
+  * `web.assets_dir`
+  * `web.templates_dir`
 
 ## [2.7.0] - 2019-04-22
 ### Added

@@ -3,6 +3,7 @@ bin/
 vendor/
 build/*
 test/kubernetes/generated
+test/helm/generated
 test/generated
 *Chart.lock
 *charts/
