@@ -266,6 +266,13 @@ Setup steps:
     * Password: password
 
 
+## Alternatives
+
+Other projects performing OIDC authentication:
+
+* [gangway](https://github.com/heptiolabs/gangway) (web)
+* [kubelogin](https://github.com/int128/kubelogin) (cli)
+
 ## MISC
 
 The code base of this repository uses some source code from the original
