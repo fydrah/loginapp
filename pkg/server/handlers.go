@@ -16,6 +16,9 @@
 package server
 
 import (
+	"os"
+	"fmt"
+	"io/ioutil"
 	"html/template"
 	"net/http"
 
@@ -51,14 +54,29 @@ func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
-	tBox := packr.New("templates", "../../web/templates")
-	// Get the string representation of a file, or an error if it doesn't exist:
-	tokenTmplStr, err := tBox.FindString("token.html")
-	if err != nil {
-		log.Errorf("template loading failed: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+	var tokenTmplStr string
+	TmplFile, err := os.Stat(fmt.Sprintf("%v/token.html", s.Config.Web.TemplatesDir))
+	if (err != nil || !TmplFile.Mode().IsRegular()) {
+		tBox := packr.New("templates", "../../web/templates")
+		// Get the string representation of a file, or an error if it doesn't exist:
+		tokenTmplFromBox, err := tBox.FindString("token.html")
+		if err != nil {
+			log.Errorf("template loading failed: %v", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		tokenTmplStr = tokenTmplFromBox
+	} else {
+		// Read the string representation of a file, or an error if it can not be read:
+		tokenTmplFromFile, err := ioutil.ReadFile(fmt.Sprintf("%v/token.html", s.Config.Web.TemplatesDir))
+		if err != nil {
+			log.Errorf("template loading from file failed: %v", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		tokenTmplStr = string(tokenTmplFromFile)
 	}
+
 	var tokenTmpl = template.New("token")
 	tokenTmpl.Parse(tokenTmplStr)
 	s.RenderTemplate(w, tokenTmpl, kc)
