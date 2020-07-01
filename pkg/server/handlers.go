@@ -45,26 +45,37 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 	http.Redirect(w, r, s.client.AuthCodeURL(r, s.Config.Secret), http.StatusSeeOther)
 }
 
+// GetTemplateStrFromPackr returns string representation of a template from Packr
+func GetTemplateStrFromPackr(templateName string) (string, error) {
+	tBox := packr.New("templates", "../../web/templates")
+	// Get the string representation of a file, or an error if it doesn't exist:
+	tmpl, err := tBox.FindString(fmt.Sprintf("%v.html", templateName))
+	if err != nil {
+		log.Errorf("template loading failed: %v", err)
+		return "", err
+	}
+	return tmpl, nil
+}
+
+// GetTemplateStrFromFile returns string representation of a template from file
+func GetTemplateStrFromFile(fileName string) (string, error) {
+	// Read the string representation of a file, or an error if it can not be read:
+	tmpl, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		log.Errorf("template loading from file failed: %v", err)
+		return "", err
+	}
+	return string(tmpl), nil
+}
+
 // GetTemplateStr returns string representation of a template
 func (s *Server) GetTemplateStr(templateName string) (string, error) {
-	TmplFile, err := os.Stat(fmt.Sprintf("%v/%v.html", s.Config.Web.TemplatesDir, templateName))
-	if (err != nil || !TmplFile.Mode().IsRegular()) {
-		tBox := packr.New("templates", "../../web/templates")
-		// Get the string representation of a file, or an error if it doesn't exist:
-		tmpl, err := tBox.FindString(fmt.Sprintf("%v.html", templateName))
-		if err != nil {
-			log.Errorf("template loading failed: %v", err)
-			return "", err
-		}
-		return tmpl, nil
+	tmplFileName := fmt.Sprintf("%v/%v.html", s.Config.Web.TemplatesDir, templateName)
+	tmplFile, err := os.Stat(tmplFileName)
+	if (err != nil || !tmplFile.Mode().IsRegular()) {
+		return GetTemplateStrFromPackr(templateName)
 	} else {
-		// Read the string representation of a file, or an error if it can not be read:
-		tmpl, err := ioutil.ReadFile(fmt.Sprintf("%v/%v.html", s.Config.Web.TemplatesDir, templateName))
-		if err != nil {
-			log.Errorf("template loading from file failed: %v", err)
-			return "", err
-		}
-		return string(tmpl), nil
+		return GetTemplateStrFromFile(tmplFileName)
 	}
 }
 
