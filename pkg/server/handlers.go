@@ -45,6 +45,29 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 	http.Redirect(w, r, s.client.AuthCodeURL(r, s.Config.Secret), http.StatusSeeOther)
 }
 
+// GetTemplateStr returns string representation of a template
+func (s *Server) GetTemplateStr(templateName string) (string, error) {
+	TmplFile, err := os.Stat(fmt.Sprintf("%v/%v.html", s.Config.Web.TemplatesDir, templateName))
+	if (err != nil || !TmplFile.Mode().IsRegular()) {
+		tBox := packr.New("templates", "../../web/templates")
+		// Get the string representation of a file, or an error if it doesn't exist:
+		tmpl, err := tBox.FindString(fmt.Sprintf("%v.html", templateName))
+		if err != nil {
+			log.Errorf("template loading failed: %v", err)
+			return "", err
+		}
+		return tmpl, nil
+	} else {
+		// Read the string representation of a file, or an error if it can not be read:
+		tmpl, err := ioutil.ReadFile(fmt.Sprintf("%v/%v.html", s.Config.Web.TemplatesDir, templateName))
+		if err != nil {
+			log.Errorf("template loading from file failed: %v", err)
+			return "", err
+		}
+		return string(tmpl), nil
+	}
+}
+
 // HandleGetCallback serves callback requests from the IdP
 func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	kc, err := s.ProcessCallback(w, r)
@@ -54,29 +77,11 @@ func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
-	var tokenTmplStr string
-	TmplFile, err := os.Stat(fmt.Sprintf("%v/token.html", s.Config.Web.TemplatesDir))
-	if (err != nil || !TmplFile.Mode().IsRegular()) {
-		tBox := packr.New("templates", "../../web/templates")
-		// Get the string representation of a file, or an error if it doesn't exist:
-		tokenTmplFromBox, err := tBox.FindString("token.html")
-		if err != nil {
-			log.Errorf("template loading failed: %v", err)
-			http.Error(w, "internal server error", http.StatusInternalServerError)
-			return
-		}
-		tokenTmplStr = tokenTmplFromBox
-	} else {
-		// Read the string representation of a file, or an error if it can not be read:
-		tokenTmplFromFile, err := ioutil.ReadFile(fmt.Sprintf("%v/token.html", s.Config.Web.TemplatesDir))
-		if err != nil {
-			log.Errorf("template loading from file failed: %v", err)
-			http.Error(w, "internal server error", http.StatusInternalServerError)
-			return
-		}
-		tokenTmplStr = string(tokenTmplFromFile)
+	tokenTmplStr, err := s.GetTemplateStr("token")
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
 	}
-
 	var tokenTmpl = template.New("token")
 	tokenTmpl.Parse(tokenTmplStr)
 	s.RenderTemplate(w, tokenTmpl, kc)
