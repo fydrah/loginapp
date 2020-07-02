@@ -73,12 +73,6 @@ func (a *App) Init() error {
 		{a.Web.MainUsernameClaim == "", "no output web.mainUsernameClaim specified, using default: 'name'", func() {
 			a.Web.MainUsernameClaim = "name"
 		}},
-		{a.Web.TemplatesDir == "", "no web.templatesDir specified, using default: '/web/templates'", func() {
-			a.Web.TemplatesDir = "/web/templates"
-		}},
-		{a.Web.AssetsDir == "", "no web.assetsDir specified, using default: '/web/assets'", func() {
-			a.Web.AssetsDir = "/web/assets"
-		}},
 		{len(a.Clusters) > 0 && a.Web.Kubeconfig.DefaultCluster == "", "No default cluster name for kubeconfig context, using first cluster name available, ", func() {
 			a.Web.Kubeconfig.DefaultCluster = a.Clusters[0].Name
 		}},
