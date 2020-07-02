@@ -8,7 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - More prometheus metrics
 - More UX improvements
-- Add templates and assets override support
+
+## [v3.1.0] - 2020-07-02
+
+### Added
+
+- Add templates and assets override support (#27)
+
+
+### Security
+
+- Removed secret logging during startup
 
 ## [v3.0.1] - 2020-05-11
 
