@@ -41,7 +41,6 @@ func New(cfg *config.App) *Server {
 	s := new(Server)
 	s.Config = cfg
 	s.router = httprouter.New()
-	s.Routes()
 	return s
 }
 
@@ -126,6 +125,7 @@ func (s *Server) RenderTemplate(w http.ResponseWriter, tmpl *template.Template, 
 // Run launch app
 func (s *Server) Run() error {
 	s.client = client.New(&s.Config.OIDC)
+	s.Routes()
 	if err := s.client.TLSSetup(); err != nil {
 		return err
 	}
