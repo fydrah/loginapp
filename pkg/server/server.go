@@ -126,13 +126,9 @@ func (s *Server) RenderTemplate(w http.ResponseWriter, tmpl *template.Template, 
 func (s *Server) Run() error {
 	s.client = client.New(&s.Config.OIDC)
 	s.Routes()
-	if err := s.client.TLSSetup(); err != nil {
+	if err := s.client.Setup(); err != nil {
 		return err
 	}
-	if err := s.client.ProviderSetup(); err != nil {
-		return err
-	}
-	s.client.VerifierSetup()
 
 	// Start prometheus metric exporter
 	log.Infof("export metric on http://0.0.0.0:%v", s.Config.Metrics.Port)
