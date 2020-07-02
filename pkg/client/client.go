@@ -221,6 +221,18 @@ func (c *Client) TLSSetup() error {
 	return nil
 }
 
+// Setup setups Client
+func (c *Client) Setup() error {
+    if err := c.TLSSetup(); err != nil {
+        return err
+    }
+    if err := c.ProviderSetup(); err != nil {
+        return err
+    }
+    c.VerifierSetup()
+    return nil
+}
+
 // Healthz reports if the client is ready to perform
 // requests to the issuer
 func (c *Client) Healthz() bool {

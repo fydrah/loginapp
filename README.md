@@ -43,8 +43,10 @@ Flags:
       --tls-cert string                          TLS certificate path
       --tls-enabled                              Enable TLS
       --tls-key string                           TLS private key path
+      --web-assetsdir string                     Directory to look for assets, which are overriding embedded (default "/web/assets")
       --web-mailclientid string                  Application client ID (default "loginapp")
       --web-mainusernameclaim string             Claim to use for username (depends on IDP available claims (default "email")
+      --web-templatesdir string                  Directory to look for templates, which are overriding embedded (default "/web/templates")
 ```
 
 

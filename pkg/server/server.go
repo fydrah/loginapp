@@ -41,7 +41,6 @@ func New(cfg *config.App) *Server {
 	s := new(Server)
 	s.Config = cfg
 	s.router = httprouter.New()
-	s.Routes()
 	return s
 }
 
@@ -126,13 +125,10 @@ func (s *Server) RenderTemplate(w http.ResponseWriter, tmpl *template.Template, 
 // Run launch app
 func (s *Server) Run() error {
 	s.client = client.New(&s.Config.OIDC)
-	if err := s.client.TLSSetup(); err != nil {
+	s.Routes()
+	if err := s.client.Setup(); err != nil {
 		return err
 	}
-	if err := s.client.ProviderSetup(); err != nil {
-		return err
-	}
-	s.client.VerifierSetup()
 
 	// Start prometheus metric exporter
 	log.Infof("export metric on http://0.0.0.0:%v", s.Config.Metrics.Port)

@@ -127,6 +127,8 @@ func (t *TLS) AddFlags(cmd *cobra.Command) {
 type Web struct {
 	MainUsernameClaim string
 	MainClientID      string
+	TemplatesDir      string
+	AssetsDir         string
 	Kubeconfig        WebKubeconfig
 }
 
@@ -134,6 +136,8 @@ type Web struct {
 func (w *Web) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("web-mainusernameclaim", "email", "Claim to use for username (depends on IDP available claims")
 	cmd.Flags().String("web-mainclientid", "", "Application client ID")
+	cmd.Flags().String("web-templatesdir", "/web/templates", "Directory to look for templates, which are overriding embedded")
+	cmd.Flags().String("web-assetsdir", "/web/assets", "Directory to look for assets, which are overriding embedded")
 	w.Kubeconfig.AddFlags(cmd)
 }
 

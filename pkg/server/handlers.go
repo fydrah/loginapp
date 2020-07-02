@@ -16,6 +16,9 @@
 package server
 
 import (
+	"os"
+	"fmt"
+	"io/ioutil"
 	"html/template"
 	"net/http"
 
@@ -42,6 +45,40 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request, _ httproute
 	http.Redirect(w, r, s.client.AuthCodeURL(r, s.Config.Secret), http.StatusSeeOther)
 }
 
+// GetTemplateStrFromPackr returns string representation of a template from Packr
+func GetTemplateStrFromPackr(templateName string) (string, error) {
+	tBox := packr.New("templates", "../../web/templates")
+	// Get the string representation of a file, or an error if it doesn't exist:
+	tmpl, err := tBox.FindString(fmt.Sprintf("%v.html", templateName))
+	if err != nil {
+		log.Errorf("template loading failed: %v", err)
+		return "", err
+	}
+	return tmpl, nil
+}
+
+// GetTemplateStrFromFile returns string representation of a template from file
+func GetTemplateStrFromFile(fileName string) (string, error) {
+	// Read the string representation of a file, or an error if it can not be read:
+	tmpl, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		log.Errorf("template loading from file failed: %v", err)
+		return "", err
+	}
+	return string(tmpl), nil
+}
+
+// GetTemplateStr returns string representation of a template
+func (s *Server) GetTemplateStr(templateName string) (string, error) {
+	tmplFileName := fmt.Sprintf("%v/%v.html", s.Config.Web.TemplatesDir, templateName)
+	tmplFile, err := os.Stat(tmplFileName)
+	if (err != nil || !tmplFile.Mode().IsRegular()) {
+		return GetTemplateStrFromPackr(templateName)
+	} else {
+		return GetTemplateStrFromFile(tmplFileName)
+	}
+}
+
 // HandleGetCallback serves callback requests from the IdP
 func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	kc, err := s.ProcessCallback(w, r)
@@ -51,11 +88,8 @@ func (s *Server) HandleGetCallback(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
-	tBox := packr.New("templates", "../../web/templates")
-	// Get the string representation of a file, or an error if it doesn't exist:
-	tokenTmplStr, err := tBox.FindString("token.html")
+	tokenTmplStr, err := s.GetTemplateStr("token")
 	if err != nil {
-		log.Errorf("template loading failed: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}

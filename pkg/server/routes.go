@@ -15,17 +15,32 @@
 package server
 
 import (
+	"os"
+	"net/http"
+
 	"github.com/gobuffalo/packr/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
+
+// GetAssetsFS returns http.FyleSystem for assets
+func (s *Server) GetAssetsFS() http.FileSystem {
+	assetsDir, err := os.Stat(s.Config.Web.AssetsDir)
+	if (err != nil || !assetsDir.IsDir()) {
+		log.Debug("assets directory not found. using embedded assets")
+		return packr.New("assets", "../../web/assets/")
+	} else {
+		log.Debug("assets directory found. using assets from directory")
+		return http.Dir(s.Config.Web.AssetsDir)
+	}
+}
 
 // Routes setup the server router
 func (s *Server) Routes() {
 	s.router.GET("/", s.HandleLogin)
 	s.router.GET("/callback", s.HandleGetCallback)
 	s.router.GET("/healthz", s.HandleGetHealthz)
-	s.router.ServeFiles("/assets/*filepath", packr.New("assets", "../../web/assets/"))
+	s.router.ServeFiles("/assets/*filepath", s.GetAssetsFS())
 	log.Debug("routes loaded")
 }
 
