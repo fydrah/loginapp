@@ -65,7 +65,6 @@ func (a *App) Init() error {
 	defaultChecks := []Check{
 		{a.Secret == "", "no secret defined, using a random secret but it is strongly advised to add a secret since without it requests cannot be load balanced between multiple server", func() {
 			a.Secret = randomString()
-			log.Info(a.Secret)
 		}},
 		{a.Web.MainClientID == "", fmt.Sprintf("no output web.mainClientID specified, using default: %v", a.OIDC.Client.ID), func() {
 			a.Web.MainClientID = a.OIDC.Client.ID
