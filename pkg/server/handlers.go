@@ -16,11 +16,11 @@
 package server
 
 import (
-	"os"
 	"fmt"
-	"io/ioutil"
 	"html/template"
+	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/gobuffalo/packr/v2"
 	"github.com/julienschmidt/httprouter"
@@ -72,7 +72,7 @@ func GetTemplateStrFromFile(fileName string) (string, error) {
 func (s *Server) GetTemplateStr(templateName string) (string, error) {
 	tmplFileName := fmt.Sprintf("%v/%v.html", s.Config.Web.TemplatesDir, templateName)
 	tmplFile, err := os.Stat(tmplFileName)
-	if (err != nil || !tmplFile.Mode().IsRegular()) {
+	if err != nil || !tmplFile.Mode().IsRegular() {
 		return GetTemplateStrFromPackr(templateName)
 	} else {
 		return GetTemplateStrFromFile(tmplFileName)

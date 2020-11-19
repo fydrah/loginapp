@@ -101,12 +101,12 @@
             <pre><code id="kubeconfigfull-code" class="code-box-copy">apiVersion: v1
 kind: Config
 preferences: {}
-current-context: {{ .AppConfig.Web.Kubeconfig.DefaultCluster }}/{{ .UsernameClaim }}
+current-context: {{ or .AppConfig.Web.Kubeconfig.DefaultContext (printf "%s/%s" .AppConfig.Web.Kubeconfig.DefaultCluster .UsernameClaim) }}
 contexts:
 {{- $usernameclaim := .UsernameClaim }}
 {{- $defaultNS := .AppConfig.Web.Kubeconfig.DefaultNamespace }}
 {{- range $cluster := .AppConfig.Clusters }}
-- name: {{ $cluster.Name }}/{{ $usernameclaim }}
+- name: {{ or $cluster.ContextName (printf "%s/%s" $cluster.Name $usernameclaim) }}
   context:
     user: {{ $usernameclaim }}
     cluster: {{ $cluster.Name }}
@@ -163,7 +163,7 @@ EOF</pre></code>
               <pre><code id="kubecluster-{{ $cluster.Name }}-cmd"># Create cluster config
 kubectl config set-cluster {{ $cluster.Name }} --certificate-authority=/tmp/{{ $cluster.Name }}.crt --server={{ $cluster.Server }} --insecure-skip-tls-verify={{ $cluster.InsecureSkipTLSVerify }} --embed-certs
 # Create context config
-kubectl config set-context {{ $cluster.Name }}/{{ $usernameclaim }} --user={{ $usernameclaim }} --cluster={{ $cluster.Name }}</pre></code>
+kubectl config set-context {{ or $cluster.ContextName (printf "%s/%s" $cluster.Name $usernameclaim) }} --user={{ $usernameclaim }} --cluster={{ $cluster.Name }}</pre></code>
             </div>
           </div>
         </div>

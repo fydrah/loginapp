@@ -24,6 +24,7 @@ import (
 	"github.com/fydrah/loginapp/pkg/client"
 	"github.com/fydrah/loginapp/pkg/config"
 	"github.com/julienschmidt/httprouter"
+	"github.com/oxtoacart/bpool"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,6 +35,7 @@ type Server struct {
 	client     *client.Client
 	router     *httprouter.Router
 	promrouter *httprouter.Router
+	bufpool    *bpool.BufferPool
 }
 
 // New initialize a new server
@@ -41,6 +43,7 @@ func New(cfg *config.App) *Server {
 	s := new(Server)
 	s.Config = cfg
 	s.router = httprouter.New()
+	s.bufpool = bpool.NewBufferPool(64)
 	return s
 }
 
@@ -106,19 +109,28 @@ func callbackFormCheck(w http.ResponseWriter, r *http.Request, secret string) er
 // RenderTemplate renders
 // go-template formatted html page
 func (s *Server) RenderTemplate(w http.ResponseWriter, tmpl *template.Template, data interface{}) {
-	err := tmpl.Execute(w, data)
-	if err == nil {
-		return
-	}
-	switch err := err.(type) {
-	case *template.Error:
-		log.Errorf("error rendering template %s: %s", tmpl.Name(), err)
 
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-	default:
-		// An error with the underlying write, such as the connection being
-		// dropped. Ignore for now.
+	b := s.bufpool.Get()
+	defer s.bufpool.Put(b)
+
+	err := tmpl.Execute(b, data)
+
+	if err != nil {
 		log.Errorf("error rendering template %s: %s", tmpl.Name(), err)
+		w.WriteHeader(http.StatusInternalServerError)
+		errorTmplStr, err := s.GetTemplateStr("error")
+		if err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		errorTmpl := template.New("error")
+		errorTmpl.Parse(errorTmplStr)
+		errorTmpl.Execute(w, nil)
+
+	} else {
+		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+		b.WriteTo(w)
 	}
 }
 

@@ -145,10 +145,12 @@ func (w *Web) AddFlags(cmd *cobra.Command) {
 type WebKubeconfig struct {
 	DefaultCluster   string
 	DefaultNamespace string
+	DefaultContext   string
 }
 
 // AddFlags init web kubeconfig flags
 func (wk *WebKubeconfig) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("web-kubeconfig-defaultcluster", "", "Default cluster name to use for full kubeconfig output")
 	cmd.Flags().String("web-kubeconfig-defaultnamespace", "default", "Default namespace to use for full kubeconfig output")
+	cmd.Flags().String("web-kubeconfig-defaultcontext", "", "Default context to use for full kubeconfig output. Use the following format by default: 'defaultcluster'/'usernameclaim'")
 }
