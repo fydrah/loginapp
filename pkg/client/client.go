@@ -48,7 +48,7 @@ func (c *Client) OAuth2Config() *oauth2.Config {
 		ClientSecret: c.Config.Client.Secret,
 		RedirectURL:  c.Config.Client.RedirectURL,
 		Endpoint:     c.Provider.Endpoint(),
-		Scopes:       c.Scopes,
+		Scopes:       c.Config.Scopes,
 	}
 }
 
@@ -135,7 +135,12 @@ func (c *Client) Context() context.Context {
 
 // PrepareScopes setup scopes slice based on the client configuration
 func (c *Client) PrepareScopes() {
-	c.Scopes = append(c.Scopes, "openid", "profile", "email", "groups")
+	c.Scopes = append(c.Scopes, c.Config.Scopes...)
+
+	if len(c.Config.Extra.Scopes) > 0 {
+		log.Warning("[DEPRECATED] Using 'oidc.extra.scopes' is deprecated, please use 'oidc.scopes' instead to override default oidc scopes")
+	}
+	c.Scopes = append(c.Scopes, c.Config.Extra.Scopes...)
 	// Prepare cross client auth
 	// see https://github.com/coreos/dex/blob/master/Documentation/custom-scopes-claims-clients.md
 	for _, crossClient := range c.Config.CrossClients {
@@ -223,14 +228,14 @@ func (c *Client) TLSSetup() error {
 
 // Setup setups Client
 func (c *Client) Setup() error {
-    if err := c.TLSSetup(); err != nil {
-        return err
-    }
-    if err := c.ProviderSetup(); err != nil {
-        return err
-    }
-    c.VerifierSetup()
-    return nil
+	if err := c.TLSSetup(); err != nil {
+		return err
+	}
+	if err := c.ProviderSetup(); err != nil {
+		return err
+	}
+	c.VerifierSetup()
+	return nil
 }
 
 // Healthz reports if the client is ready to perform

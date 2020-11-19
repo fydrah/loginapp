@@ -35,18 +35,25 @@ Flags:
       --oidc-client-secret string                Client secret
       --oidc-crossclients strings                Issue token on behalf of this list of client IDs
       --oidc-extra-authcodeopts stringToString   K/V list of extra authorisation code to include in token request (default [])
-      --oidc-extra-scopes strings                List of extra scopes to ask
+      --oidc-extra-scopes strings                [DEPRECATED] List of extra scopes to ask. Use oidc.scopes option instead. Option will be removed in next release.
+      --oidc-issuer-insecureskipverify           Skip issuer certificate validation (usefull for testing). It is not advised to use this option in production
       --oidc-issuer-rootca string                Certificate authority of the issuer
       --oidc-issuer-url string                   Full URL of issuer before '/.well-known/openid-configuration' path
       --oidc-offlineasscope                      Issue a refresh token for offline access
+      --oidc-scopes strings                      List of scopes to request. Updating this parameter will override existing scopes. (default [openid,profile,email,groups])
   -s, --secret string                            Application secret. Must be identical across all loginapp server replicas (this is not the OIDC Client secret)
       --tls-cert string                          TLS certificate path
       --tls-enabled                              Enable TLS
       --tls-key string                           TLS private key path
       --web-assetsdir string                     Directory to look for assets, which are overriding embedded (default "/web/assets")
-      --web-mailclientid string                  Application client ID (default "loginapp")
+      --web-kubeconfig-defaultcluster string     Default cluster name to use for full kubeconfig output
+      --web-kubeconfig-defaultnamespace string   Default namespace to use for full kubeconfig output (default "default")
+      --web-mainclientid string                  Application client ID
       --web-mainusernameclaim string             Claim to use for username (depends on IDP available claims (default "email")
       --web-templatesdir string                  Directory to look for templates, which are overriding embedded (default "/web/templates")
+
+Global Flags:
+  -v, --verbose   Verbose output
 ```
 
 

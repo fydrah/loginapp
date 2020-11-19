@@ -226,7 +226,7 @@ configOverwrites:
     crossClients:
       - kubernetes
   web:
-    mainClientID: kubernetes 
+    mainClientID: kubernetes
 ```
 
 ### Certificates
