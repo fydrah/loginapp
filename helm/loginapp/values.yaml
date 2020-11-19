@@ -147,8 +147,7 @@ config:
 # Example:
 #
 #  oidc:
-#    extraScopes:
-#      - groups
+#    scopes: [openid,profile,email]
 configOverwrites: {}
 
 # Enable dex deployment

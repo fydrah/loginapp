@@ -142,8 +142,6 @@ data:
       issuer:
         rootCA: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
         url: "https://dex.${NODE_IP}.nip.io:32000"
-      extraScopes:
-        - groups
     tls:
       enabled: true
       cert: /ssl/tls.crt
@@ -185,8 +183,6 @@ oidc:
   issuer:
     rootCA: "${CURR_DIR}/generated/ssl/ca.crt"
     url: "https://dex.${NODE_IP}.nip.io:32000"
-  extraScopes:
-    - groups
 tls:
   enabled: true
   cert: ${CURR_DIR}/generated/ssl/loginapp.crt

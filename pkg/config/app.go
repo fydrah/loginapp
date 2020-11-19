@@ -48,12 +48,14 @@ type OIDC struct {
 	Extra          OIDCExtra
 	OfflineAsScope bool
 	CrossClients   []string
+	Scopes         []string
 }
 
 // AddFlags init oidc flags
 func (o *OIDC) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool("oidc-offlineasscope", false, "Issue a refresh token for offline access")
 	cmd.Flags().StringSlice("oidc-crossclients", nil, "Issue token on behalf of this list of client IDs")
+	cmd.Flags().StringSlice("oidc-scopes", []string{"openid", "profile", "email", "groups"}, "List of scopes to request. Updating this parameter will override existing scopes.")
 	o.Client.AddFlags(cmd)
 	o.Issuer.AddFlags(cmd)
 	o.Extra.AddFlags(cmd)
@@ -95,7 +97,7 @@ type OIDCExtra struct {
 
 // AddFlags init oidc extra flags
 func (oe *OIDCExtra) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringSlice("oidc-extra-scopes", nil, "List of extra scopes to ask")
+	cmd.Flags().StringSlice("oidc-extra-scopes", nil, "[DEPRECATED] List of extra scopes to ask. Use oidc.scopes option instead. Option will be removed in next release.")
 	cmd.Flags().StringToString("oidc-extra-authcodeopts", nil, "K/V list of extra authorisation code to include in token request")
 }
 
