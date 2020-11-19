@@ -8,6 +8,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v1.5.1
 	github.com/sirupsen/logrus v1.5.0

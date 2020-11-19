@@ -22,6 +22,7 @@ type Cluster struct {
 	Server                string
 	InsecureSkipTLSVerify bool   `mapstructure:"insecure-skip-tls-verify"`
 	CertificateAuthority  string `mapstructure:"certificate-authority"`
+	ContextName           string
 }
 
 // Base64Cert convert a plain text certificate to a base64 encoded string

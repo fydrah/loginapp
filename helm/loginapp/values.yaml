@@ -140,6 +140,8 @@ config:
   #      NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
   #      -----END CERTIFICATE-----
   #    insecure-skip-tls-verify: false
+  #    # Alternative context name for this cluster
+  #    contextName: altcontextname
 
 # Configuration overrides, this is a free configuration merged
 # with the previous generated configuration 'config'. Use this

@@ -150,6 +150,10 @@ web:
     # Change default namespace for kubeconfig contexts
     # Default: default
     defaultNamespace: default
+    # Change default context for kubeconfig
+    # If not set, use a format like 'defaultClusterName'/'usernameClaim'
+    # Default: ""
+    defaultContext: altcontextname
 
 # Metrics configuration
 metrics:
@@ -169,6 +173,8 @@ clusters:
       NTJaMA8xDTALBgNVBAMMBG15Y2EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
       -----END CERTIFICATE-----
     insecure-skip-tls-verify: false
+    # Alternative context name for this cluster
+    contextName: altcontextname
 ```
 
 ## Deployment
