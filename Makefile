@@ -24,6 +24,7 @@ all: build
 packr2:
 	which packr2 || go get -u github.com/gobuffalo/packr/v2/packr2
 	# packr2 still requires GO111MODULE var
+	GO111MODULE=on packr2 clean
 	GO111MODULE=on packr2
 
 .PHONY: vendor
@@ -32,6 +33,7 @@ vendor:
 
 .PHONY: build
 build: clean vendor packr2
+	packr2 clean
 	go build -mod=vendor -o $(BUILDDIR)/loginapp $(GOFLAGS) -ldflags '$(LDFLAGS)' $(GIT_REPOSITORY)
 
 .PHONY: build-static
@@ -58,4 +60,3 @@ helmpackage: helmdoc
 .PHONY: clean
 clean:
 	rm -f $(BUILDDIR)/loginapp
-	packr2 clean

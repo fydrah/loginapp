@@ -15,8 +15,8 @@
 package server
 
 import (
-	"os"
 	"net/http"
+	"os"
 
 	"github.com/gobuffalo/packr/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -26,7 +26,7 @@ import (
 // GetAssetsFS returns http.FyleSystem for assets
 func (s *Server) GetAssetsFS() http.FileSystem {
 	assetsDir, err := os.Stat(s.Config.Web.AssetsDir)
-	if (err != nil || !assetsDir.IsDir()) {
+	if err != nil || !assetsDir.IsDir() {
 		log.Debug("assets directory not found. using embedded assets")
 		return packr.New("assets", "../../web/assets/")
 	} else {
