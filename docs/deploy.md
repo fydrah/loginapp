@@ -7,6 +7,7 @@ Several identity providers exist:
 - [Dex](https://github.com/dexidp/dex/)
 - [Keycloak](https://www.keycloak.org/)
 - [Microsoft ADFS](https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/development/ad-fs-openid-connect-oauth-concepts)
+- [Google](https://developers.google.com/identity/protocols/oauth2/openid-connect)
 - ...
 
 
@@ -213,6 +214,11 @@ Here are the required configuration for Loginapp:
 - `config.clientRedirectURL`: this value depends on the deployment type you use. Must end with `/callback`
 - `config.issuerURL`: see [required configuration from IdP](#Required-configuration-from-IdP)
 - `config.issuerRootCA` (or `config.issuerInsecureSkipVerify` for testing)
+
+### (optional) Specific IdP configuration
+
+* [ADFS](adfs-compatibility.md)
+* [Google](google-compatibility.md)
 
 ### Configuration overwrite 
 

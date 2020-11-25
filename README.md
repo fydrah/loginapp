@@ -101,16 +101,26 @@ oidc:
     # Default: false
     insecureSkipVerify: false
 
+  # List of scopes to request.
+  # Updating this parameter will override existing scopes.
+  # Default:[openid,profile,email,groups]
+  scopes: []
+
   # OIDC extra configuration
   extra:
-    # OIDC Scopes in addition to
+    # [DEPREACTED] OIDC Scopes in addition to
     # "openid", "profile", "email", "groups"
+    #
+    # Use oidc.scopes instead
+    #
     # default: []
     scopes: []
 
     # Extra auth code options
-    # Some extra auth code options are required for ADFS compatibility (ex: resource).
-    # See: https://docs.microsoft.com/fr-fr/windows-server/identity/ad-fs/overview/ad-fs-scenarios-for-developers
+    # Some extra auth code options are required for:
+    # * ADFS compatibility (ex: resource, https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/overview/ad-fs-openid-connect-oauth-flows-scenarios)
+    # * Google OIDC compatibility (ex: https://developers.google.com/identity/protocols/oauth2/openid-connect#refresh-tokens)
+    # See: 
     # default: {}
     authCodeOpts:
       resource: XXXXX
@@ -154,6 +164,21 @@ web:
     # If not set, use a format like 'defaultClusterName'/'usernameClaim'
     # Default: ""
     defaultContext: altcontextname
+    # Extra key/value pairs to add to kubeconfig output.
+    # Key/value pairs are added under `user.auth-provider.config`
+    # dictionnary into the kubeconfig.
+    # Ex:
+    # extraOpts:
+    #   mykey1: value1
+    #
+    # Kubeconfig Output:
+    # - name: user.name@example.org
+    #     auth-provider:
+    #       config:
+    #         mykey1: value1
+    #         client-id: loginapp
+    #         [...]
+    extraOpts: {}
 
 # Metrics configuration
 metrics:
