@@ -48,7 +48,7 @@
             </button>
             <pre><code id="kubectl-code">kubectl config set-credentials {{ .UsernameClaim }} \
     --auth-provider oidc \
-{{- range $k,$v := .AppConfig.OIDC.Extra.AuthCodeOpts }}
+{{- range $k,$v := .AppConfig.Web.Kubeconfig.ExtraOpts }}
     --auth-provider-arg {{ $k }}={{ $v }} \
 {{- end }}
     --auth-provider-arg idp-issuer-url={{ .Claims.iss }} \
@@ -125,7 +125,7 @@ users:
   user:
     auth-provider:
       config:
-{{- range $k,$v := .AppConfig.OIDC.Extra.AuthCodeOpts }}
+{{- range $k,$v := .AppConfig.Web.Kubeconfig.ExtraOpts }}
         {{ $k }}: "{{ $v }}"
 {{- end }}
         idp-issuer-url: {{ .Claims.iss }}
