@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More prometheus metrics
 - More UX improvements
 
+## [v3.2.0] - 2020-11-25
+
+### Added
+
+- Google compatibility for refresh token (#32)
+- Alternative Kubeconfig context name and clusters name (#31)
+- Error page \o/
+
+### Fixed
+
+- Allow scopes overrides (#30)
+
 ## [v3.1.0] - 2020-07-02
 
 ### Added
