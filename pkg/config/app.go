@@ -156,5 +156,5 @@ func (wk *WebKubeconfig) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().String("web-kubeconfig-defaultcluster", "", "Default cluster name to use for full kubeconfig output")
 	cmd.Flags().String("web-kubeconfig-defaultnamespace", "default", "Default namespace to use for full kubeconfig output")
 	cmd.Flags().String("web-kubeconfig-defaultcontext", "", "Default context to use for full kubeconfig output. Use the following format by default: 'defaultcluster'/'usernameclaim'")
-	cmd.Flags().String("web-kubeconfig-extraopts", "", "Extra key/value pairs to add to kubeconfig output. Key/value pairs are added under `user.auth-provider.config` dictionnary into the kubeconfig")
+	cmd.Flags().StringToString("web-kubeconfig-extraopts", nil, "Extra key/value pairs to add to kubeconfig output. Key/value pairs are added under 'user.auth-provider.config' dictionnary into the kubeconfig")
 }

@@ -30,8 +30,6 @@ func (a *App) Init() error {
 		Extract data from yaml configuration file
 	*/
 
-	// dirty patch until https://github.com/spf13/viper/issues/608 is solved
-	viper.Set("oidc.extra.authcodeopts", viper.GetStringMapString("oidc.extra.authcodeopts"))
 	if err := viper.Unmarshal(&a); err != nil {
 		return err
 	}
