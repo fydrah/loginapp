@@ -48,7 +48,7 @@ func (c *Client) OAuth2Config() *oauth2.Config {
 		ClientSecret: c.Config.Client.Secret,
 		RedirectURL:  c.Config.Client.RedirectURL,
 		Endpoint:     c.Provider.Endpoint(),
-		Scopes:       c.Config.Scopes,
+		Scopes:       c.Scopes,
 	}
 }
 
