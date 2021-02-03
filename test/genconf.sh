@@ -3,7 +3,7 @@
 # /!\ For testing purpose only
 
 CURR_DIR=$(dirname $0)
-NODE_IP=$(docker inspect loginapp-control-plane -f '{{ .NetworkSettings.Networks.bridge.IPAddress }}')
+NODE_IP=$(docker inspect loginapp-control-plane -f '{{ .NetworkSettings.Networks.kind.IPAddress }}')
 
 mkdir -p ${CURR_DIR}/generated/ssl ${CURR_DIR}/kubernetes/generated ${CURR_DIR}/helm/generated
 

@@ -14,13 +14,13 @@ type: application
 
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
-version: v1.0.5
+version: v1.0.6
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application.
-appVersion: v3.2.1
+appVersion: v3.2.2
 dependencies:
 - name: dex
-  version: "2.10.0"
-  repository: "https://kubernetes-charts.storage.googleapis.com"
+  version: "2.15.3"
+  repository: "https://wiremind.github.com/wiremind-helm-charts"
   condition: dex.enabled

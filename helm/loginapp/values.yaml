@@ -4,7 +4,7 @@
 
 replicas: 1
 
-image: quay.io/fydrah/loginapp:v3.2.1
+image: quay.io/fydrah/loginapp:v3.2.2
 imagePullPolicy: IfNotPresent
 
 imagePullSecrets: []
