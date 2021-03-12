@@ -14,11 +14,11 @@ type: application
 
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
-version: v1.0.6
+version: v1.0.7
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application.
-appVersion: v3.2.2
+appVersion: v3.2.3
 dependencies:
 - name: dex
   version: "2.15.3"
