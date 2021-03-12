@@ -68,5 +68,5 @@ func PromIncRequest(sc int, m string) {
 // PromAddRequestDuration append request duration for
 // a given return code and http method
 func PromAddRequestDuration(sc int, m string, d time.Duration) {
-	RequestDuration.With(prometheus.Labels{"code": fmt.Sprintf("%v", sc), "method": m}).Add(d.Seconds())
+	RequestDuration.With(prometheus.Labels{"code": fmt.Sprintf("%v", sc), "method": m}).Set(d.Seconds())
 }
