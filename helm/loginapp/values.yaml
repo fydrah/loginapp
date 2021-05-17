@@ -163,20 +163,7 @@ configOverwrites: {}
 #      <title>Hello token</title>
 #      </body>
 #      </html>`}}
-
-templates:
-  token.html: |-
-    {{`<html>
-    <body>
-    <title>Hello token</title>
-    </body>
-    </html>`}}
-  error.html: |-
-    {{`<html>
-    <body>
-    <title>Hello token</title>
-    </body>
-    </html>`}}
+templates: {}
 
 # Enable dex deployment
 # See https://github.com/helm/charts/tree/master/stable/dex for
