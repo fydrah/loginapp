@@ -9,7 +9,7 @@ data:
   config.yaml: |
 {{ toYaml (mergeOverwrite $config .Values.configOverwrites) | nindent 4 }}
 ---
-{{- if and .Values.templates.error .Values.templates.token}}
+{{- if .Values.templates }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,6 +17,8 @@ metadata:
   labels:
     {{- include "loginapp.labels" . | nindent 4 }}
 data:
-  error.html: {{ .Values.templates.error }}
-  token.html: {{ .Values.templates.token }}
+{{- range $key, $val := .Values.templates }}
+{{ $key | indent 2 }}: |-
+{{ $val | nindent 4 }}
+{{- end }}
 {{- end }}

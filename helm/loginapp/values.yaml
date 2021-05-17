@@ -88,7 +88,7 @@ config:
   # if empty, generate a random string
   # please setup a real secret otherwise helm will generate
   # a new secret at each deployment
-  secret: 
+  secret:
   # OIDC Client ID
   clientID: "loginapp"
   # OIDC Client secret
@@ -157,10 +157,26 @@ configOverwrites: {}
 # Example:
 #
 #  templates:
-#    token: {{`<html><body><title>Hello token</title></body></html>`}}
+#    token.html: |-
+#      {{`<html>
+#      <body>
+#      <title>Hello token</title>
+#      </body>
+#      </html>`}}
+
 templates:
-  token: null
-  error: null
+  token.html: |-
+    {{`<html>
+    <body>
+    <title>Hello token</title>
+    </body>
+    </html>`}}
+  error.html: |-
+    {{`<html>
+    <body>
+    <title>Hello token</title>
+    </body>
+    </html>`}}
 
 # Enable dex deployment
 # See https://github.com/helm/charts/tree/master/stable/dex for
