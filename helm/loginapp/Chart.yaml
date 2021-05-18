@@ -21,6 +21,6 @@ version: v1.0.7
 appVersion: v3.2.3
 dependencies:
 - name: dex
-  version: "2.15.3"
-  repository: "https://wiremind.github.com/wiremind-helm-charts"
+  version: "0.3.2"
+  repository: "https://charts.dexidp.io"
   condition: dex.enabled

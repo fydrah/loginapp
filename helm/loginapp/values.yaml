@@ -92,7 +92,7 @@ config:
   # OIDC Client ID
   clientID: "loginapp"
   # OIDC Client secret
-  clientSecret:
+  clientSecret: ""
   # OIDC Client redirect URL
   # This must end with /callback
   # if empty, defaults to:
@@ -151,6 +151,19 @@ config:
 #  oidc:
 #    scopes: [openid,profile,email]
 configOverwrites: {}
+
+
+# Configuration overrides html templates content used by loginapp to display error and token pages
+# Example:
+#
+#  templates:
+#    token.html: |-
+#      {{`<html>
+#      <body>
+#      <title>Hello token</title>
+#      </body>
+#      </html>`}}
+templates: {}
 
 # Enable dex deployment
 # See https://github.com/helm/charts/tree/master/stable/dex for

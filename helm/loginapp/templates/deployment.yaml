@@ -69,6 +69,10 @@ spec:
           volumeMounts:
             - name: config
               mountPath: "/cfg"
+            {{- if .Values.templates }}
+            - name: templates
+              mountPath: /web/templates/
+            {{- end }}
             {{- if .Values.config.issuerRootCA.configMap }}
             - name: issuer-ca
               mountPath: "/tls/issuer"
@@ -81,6 +85,16 @@ spec:
       - name: config
         configMap:
           name: {{ include "loginapp.fullname" . }}
+      {{- if .Values.templates }}
+      - name: templates
+        configMap:
+          name: {{ include "loginapp.fullname" . }}-templates
+          items:
+          {{- range $key, $val := .Values.templates }}
+          - key: {{ $key | quote }}
+            path: {{ $key | quote }}
+          {{- end }}
+      {{- end }}
       {{- if .Values.config.issuerRootCA.configMap }}
       - name: issuer-ca
         configMap:
