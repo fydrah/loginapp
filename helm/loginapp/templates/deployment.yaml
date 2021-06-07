@@ -32,7 +32,11 @@ spec:
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           envFrom:
             - secretRef:
+                {{- if not .Values.config.existingSecret }}
                 name: {{ include "loginapp.fullname" . }}-env
+                {{- else }}
+                name: {{ .Values.config.existingSecret }}
+                {{- end }}
           {{- if .Values.env }}
           env:
           {{- range $k, $v := .Values.env }}
