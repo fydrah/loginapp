@@ -85,6 +85,8 @@ config:
   # Application name, defaults to Release name
   name:
   # Application secret
+  # Use an existing secret for the loginapp secret and OIDC secret
+  existingSecret:
   # if empty, generate a random string
   # please setup a real secret otherwise helm will generate
   # a new secret at each deployment
