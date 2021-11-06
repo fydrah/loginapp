@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta1
+apiVersion: skaffold/v2beta25
 kind: Config
 metadata:
   name: loginapp
@@ -10,29 +10,29 @@ profiles:
     kubectl:
       manifests:
       - test/kubernetes/generated/dex-certs.yaml
-      - test/kubernetes/generated/dex-config.yaml
-      - test/kubernetes/dex.yaml
-- name: loginapp
+    helm:
+      releases:
+        - name: dex
+          namespace: kube-system
+          repo: https://charts.dexidp.io
+          remoteChart: dex
+          version: 0.6.3
+          valuesFiles:
+            - test/helm/generated/dex-overrides.yaml
+- name: helm
   build:
     artifacts:
     - image: quay.io/fydrah/loginapp
   deploy:
     kubectl:
       manifests:
-      - test/kubernetes/generated/loginapp-certs.yaml
-      - test/kubernetes/generated/loginapp-config.yaml
-      - test/kubernetes/loginapp.yaml
-- name: helm
-  build:
-    artifacts:
-    - image: quay.io/fydrah/loginapp
-  deploy:
+      - test/kubernetes/generated/dex-certs.yaml
     helm:
       releases:
         - name: loginapphelm
           chartPath: helm/loginapp
           namespace: kube-system
-          values:
+          setValues:
             image: quay.io/fydrah/loginapp
           valuesFiles:
             - test/helm/generated/overrides.yaml
