@@ -21,6 +21,6 @@ version: v1.2.1
 appVersion: v3.2.3
 dependencies:
 - name: dex
-  version: "0.3.2"
+  version: "0.6.3"
   repository: "https://charts.dexidp.io"
   condition: dex.enabled

@@ -168,7 +168,7 @@ configOverwrites: {}
 templates: {}
 
 # Enable dex deployment
-# See https://github.com/helm/charts/tree/master/stable/dex for
+# See https://github.com/dexidp/helm-charts/tree/master/charts/dex
 # more information about available values
 dex:
   enabled: false

@@ -13,7 +13,7 @@ Several identity providers exist:
 
 The first step is to choose the IdP Loginapp will work with.
 
-If you do not already have an IdP, the Loginapp helm charts suggest the deployment of Dex through its [official chart](https://github.com/helm/charts/tree/master/stable/dex).
+If you do not already have an IdP, the Loginapp helm charts suggest the deployment of Dex through its [official chart](https://github.com/dexidp/helm-charts).
 
 
 ### (optional) Dex chart usage with Loginapp chart
