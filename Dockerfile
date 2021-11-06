@@ -1,10 +1,10 @@
-FROM quay.io/fydrah/golang:1.13-alpine AS build
+FROM quay.io/fydrah/golang:1.17-alpine3.13 AS build
 ARG REPO=github.com/fydrah/loginapp
 
 RUN apk add --no-cache git build-base
 COPY . /go/src/${REPO}
 WORKDIR /go/src/${REPO}
-RUN make build-static
+RUN make go_build_static
 
 FROM scratch
 ARG REPO=github.com/fydrah/loginapp

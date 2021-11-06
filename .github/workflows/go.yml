@@ -16,9 +16,7 @@ jobs:
     - name: Check go fmt has been run
       run: |
         echo 'Check if go fmt has been run'
-        make gofmt
+        make go_fmt
         [[ "$(git diff --name-only | wc -l)" -eq "0" ]]
     - name: Build
-      run: make build
-    - name: Build static
-      run: make build-static
+      run: make
