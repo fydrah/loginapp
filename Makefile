@@ -11,7 +11,7 @@ GIT_TAG			:= $(shell git describe --tags --exclude="chart-*")
 # Go
 GOFLAGS			:=
 LDFLAGS			= -w -s -X "$(GIT_REPOSITORY)/cmd.GitVersion=$(GIT_TAG)" -X "$(GIT_REPOSITORY)/cmd.GitHash=$(GIT_COMMIT_ID)" -extldflags "-static"
-PACKR_VERSION		:= $(shell awk '/packr/ {print $$2}' go.mod)
+PACKR_VERSION		:= $(shell awk '/packr/ {sub(/^[ \t]+/,""); print $$2}' go.mod)
 
 # Docker
 DOCKERFILE		:= Dockerfile

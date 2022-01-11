@@ -10,4 +10,4 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
     - name: Build
-      run: make docker-tmp
+      run: make docker_build
