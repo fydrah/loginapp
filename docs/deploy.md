@@ -99,7 +99,7 @@ service:
   type: NodePort # Or LoadBalancer
   nodePort: 32001 # If type NodePort
 
-ingress: 
+ingress:
   enabled: false
 
 config:
@@ -116,7 +116,7 @@ service:
   type: NodePort # Or LoadBalancer
   nodePort: 32001 # If type NodePort
 
-ingress: 
+ingress:
   enabled: false
 
 config:
@@ -134,7 +134,7 @@ service:
   type: NodePort # Or LoadBalancer
   nodePort: 32001 # If type NodePort
 
-ingress: 
+ingress:
   enabled: false
 
 config:
@@ -150,11 +150,14 @@ config:
 service:
   type: ClusterIP
 
-ingress: 
+ingress:
   enabled: true
   hosts:
   - host: loginapp.example.org
-    paths: [/]
+    paths:
+      - path: /
+        pathType: ImplementationSpecific
+
 
 config:
   tls:
@@ -168,14 +171,17 @@ config:
 service:
   type: ClusterIP
 
-ingress: 
+ingress:
   enabled: true
   hosts:
   - host: loginapp.example.org
-    paths: [/]
+    paths:
+      - path: /
+        pathType: ImplementationSpecific
+
   tls:
   - secretName: loginapp-tls # This secret (kubernetes.io/tls) must exist (or use Letsencrypt)
-    
+
 config:
   tls:
     enabled: false
@@ -188,16 +194,18 @@ config:
 service:
   type: ClusterIP
 
-ingress: 
+ingress:
   enabled: true
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # If you use nginx ingress
   hosts:
   - host: loginapp.example.org
-    paths: [/]
+    paths:
+      - path: /
+        pathType: ImplementationSpecific
   tls:
   - secretName: loginapp-tls # This secret (kubernetes.io/tls) must exist (or use Letsencrypt)
-    
+
 config:
   tls:
     enabled: true
