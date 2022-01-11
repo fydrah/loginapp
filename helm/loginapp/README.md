@@ -5,9 +5,9 @@
 ## TL;DR;
 
 ```console
-$ helm repo add fydrah-stable https://charts.fydrah.com
+$ helm repo add loginapp https://loginapp-releases.storage.googleapis.com/charts/
 $ helm repo update
-$ helm install loginapp fydrah-stable/loginapp -n auth
+$ helm install loginapp loginapp/loginapp -n auth
 ```
 
 ## Introduction
@@ -28,7 +28,7 @@ This chart deploys  on a [Kubernetes](http://kubernetes.io) cluster using the [H
 To install the chart with the release name `loginapp`:
 
 ```console
-$ helm install loginapp fydrah-stable/loginapp -n auth
+$ helm install loginapp loginapp/loginapp -n auth
 ```
 
 The command deploys  on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -98,12 +98,12 @@ The following table lists the configurable parameters of the `loginapp` chart an
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example:
 
 ```console
-$ helm install loginapp fydrah-stable/loginapp -n auth --set replicas=1
+$ helm install loginapp loginapp/loginapp -n auth --set replicas=1
 ```
 
 Alternatively, a YAML file that specifies the values for the parameters can be provided while
 installing the chart. For example:
 
 ```console
-$ helm install loginapp fydrah-stable/loginapp -n auth --values values.yaml
+$ helm install loginapp loginapp/loginapp -n auth --values values.yaml
 ```

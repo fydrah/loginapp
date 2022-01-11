@@ -4,7 +4,7 @@ ARG REPO=github.com/fydrah/loginapp
 RUN apk add --no-cache git build-base
 COPY . /go/src/${REPO}
 WORKDIR /go/src/${REPO}
-RUN make go_build_static
+RUN make
 
 FROM scratch
 ARG REPO=github.com/fydrah/loginapp
