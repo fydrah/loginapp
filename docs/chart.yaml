@@ -4,7 +4,7 @@ project:
   url: https://github.com/fydrah/loginapp
   description: OIDC authentication helper for Kubernetes
 repository:
-  url: https://loginapp-releases.storage.googleapis.com/charts/
+  url: https://storage.googleapis.com/loginapp-releases/charts/
   name: loginapp
 chart:
   name: loginapp

@@ -19,6 +19,10 @@ DOCKER_REPOSITORY	:= quay.io/fydrah/loginapp
 DOCKER_BIN		:= $(shell which docker || which podman || echo "docker")
 DOCKER_BUILD		:= $(DOCKER_BIN) build -f $(DOCKERFILE) .
 
+# Helm
+HELM_LOGINAPP_REPO	:= https://storage.googleapis.com/loginapp-releases/charts
+HELM_TMP_CHART_DIR	:= $(shell mktemp -d)
+
 .PHONY: all
 all: go_build
 
@@ -61,10 +65,24 @@ helm_doc:
 	@echo "[Helm] doc"
 	@chart-doc-gen -d docs/chart.yaml -v=helm/loginapp/values.yaml > ./helm/loginapp/README.md
 
-.PHONY: helm_package
-helm_package: helm_doc
-	@echo "[Helm] package chart"
-	@helm package -u helm/loginapp -d $(BUILDDIR)
+.PHONY: helm_dependency
+helm_dependency:
+	@echo "[Helm] dependency"
+	@helm dependency update ./helm/loginapp
+
+.PHONY: helm_sync_repo
+helm_sync_repo: helm_doc helm_dependency
+	@echo "[Helm] sync repo"
+	@echo "[Helm] 1. package chart"
+	@helm package ./helm/loginapp -d $(HELM_TMP_CHART_DIR)
+	@echo "[Helm] 2. local repo index"
+	@curl -sL $(HELM_LOGINAPP_REPO)/index.yaml -o $(HELM_TMP_CHART_DIR)/index.yaml
+	@helm repo index $(HELM_TMP_CHART_DIR) \
+		--url $(HELM_LOGINAPP_REPO) \
+		--merge $(HELM_TMP_CHART_DIR)/index.yaml
+	@echo "[Helm] 3. sync chart and index"
+	@gsutil rsync -n $(HELM_TMP_CHART_DIR)/ gs://loginapp-releases/charts
+	@echo -e "\nTo apply sync: 'gsutil rsync $(HELM_TMP_CHART_DIR)/ gs://loginapp-releases/charts'"
 
 .PHONY: clean
 clean:

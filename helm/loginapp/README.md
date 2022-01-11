@@ -5,7 +5,7 @@
 ## TL;DR;
 
 ```console
-$ helm repo add loginapp https://loginapp-releases.storage.googleapis.com/charts/
+$ helm repo add loginapp https://storage.googleapis.com/loginapp-releases/charts/
 $ helm repo update
 $ helm install loginapp loginapp/loginapp -n auth
 ```
