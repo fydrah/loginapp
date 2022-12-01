@@ -3,7 +3,14 @@
 # /!\ For testing purpose only
 
 CURR_DIR=$(dirname $0)
-NODE_IP=$(docker inspect loginapp-control-plane -f '{{ .NetworkSettings.Networks.kind.IPAddress }}')
+
+if [[ $OSTYPE == 'darwin'* ]]; then
+  NODE_IP="127.0.0.1"
+  BASE64_CMD="base64"
+else
+  NODE_IP=$(docker inspect loginapp-control-plane -f '{{ .NetworkSettings.Networks.kind.IPAddress }}')
+  BASE64_CMD="base64 -w0"
+fi
 
 mkdir -p ${CURR_DIR}/generated/ssl ${CURR_DIR}/kubernetes/generated ${CURR_DIR}/helm/generated
 
@@ -41,7 +48,7 @@ metadata:
   name: ${cert}
 spec:
   signerName: kubernetes.io/kubelet-serving
-  request: $(base64 -i ${CURR_DIR}/generated/ssl/csr-${cert}.pem -w0)
+  request: $(${BASE64_CMD} -i ${CURR_DIR}/generated/ssl/csr-${cert}.pem)
   usages:
   - key encipherment
   - digital signature
@@ -74,7 +81,7 @@ metadata:
 type: kubernetes.io/tls
 data:
   tls.crt: $(kubectl get csr ${cert} -o jsonpath='{.status.certificate}')
-  tls.key: $(base64 -i ${CURR_DIR}/generated/ssl/key-${cert}.pem -w0)
+  tls.key: $(${BASE64_CMD} -i ${CURR_DIR}/generated/ssl/key-${cert}.pem)
 EOF
 done
 
@@ -126,7 +133,7 @@ config:
   staticPasswords:
   - email: "admin@example.com"
     # bcrypt hash of the string "password"
-    hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+    hash: "\$2a\$10\$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
     username: "admin"
     userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
 EOF
@@ -323,7 +330,7 @@ dex:
     staticPasswords:
     - email: "admin@example.com"
       # bcrypt hash of the string "password"
-      hash: "a0b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+      hash: "\$2a\$10\$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
       username: "admin"
       userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
 EOF

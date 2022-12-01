@@ -1,38 +1,40 @@
-apiVersion: skaffold/v2beta25
+apiVersion: skaffold/v3
 kind: Config
 metadata:
   name: loginapp
 build: {}
 deploy: {}
 profiles:
-- name: dex
-  deploy:
-    kubectl:
-      manifests:
-      - test/kubernetes/generated/dex-certs.yaml
-    helm:
-      releases:
-        - name: dex
-          namespace: kube-system
-          repo: https://charts.dexidp.io
-          remoteChart: dex
-          version: 0.6.3
-          valuesFiles:
-            - test/helm/generated/dex-overrides.yaml
-- name: helm
-  build:
-    artifacts:
-    - image: quay.io/fydrah/loginapp
-  deploy:
-    kubectl:
-      manifests:
-      - test/kubernetes/generated/dex-certs.yaml
-    helm:
-      releases:
-        - name: loginapphelm
-          chartPath: helm/loginapp
-          namespace: kube-system
-          setValues:
-            image: quay.io/fydrah/loginapp
-          valuesFiles:
-            - test/helm/generated/overrides.yaml
+  - name: dex
+    manifests:
+      rawYaml:
+        - "test/kubernetes/generated/dex-certs.yaml"
+    deploy:
+      kubectl: {}
+      helm:
+        releases:
+          - name: dex
+            namespace: kube-system
+            repo: https://charts.dexidp.io
+            remoteChart: dex
+            version: 0.6.3
+            valuesFiles:
+              - test/helm/generated/dex-overrides.yaml
+  - name: helm
+    build:
+      artifacts:
+      - image: quay.io/fydrah/loginapp
+    manifests:
+      rawYaml:
+        - test/kubernetes/generated/dex-certs.yaml
+    deploy:
+      kubectl: {}
+      helm:
+        releases:
+          - name: loginapphelm
+            chartPath: helm/loginapp
+            namespace: kube-system
+            setValues:
+              image: quay.io/fydrah/loginapp
+            valuesFiles:
+              - test/helm/generated/overrides.yaml
