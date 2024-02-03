@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/coreos/go-oidc v2.2.1+incompatible
-	github.com/fsnotify/fsnotify v1.5.1
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
