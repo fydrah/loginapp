@@ -17,7 +17,7 @@ PACKR_VERSION		:= $(shell awk '/packr/ {sub(/^[ \t]+/,""); print $$2}' go.mod)
 DOCKERFILE		:= Dockerfile
 DOCKER_REPOSITORY	:= quay.io/fydrah/loginapp
 DOCKER_BIN		:= $(shell which docker || which podman || echo "docker")
-DOCKER_BUILD		:= $(DOCKER_BIN) build -f $(DOCKERFILE) .
+DOCKER_BUILD		:= $(DOCKER_BIN) buildx build --platform linux/amd64,linux/arm64 -f $(DOCKERFILE) .
 
 # Helm
 HELM_LOGINAPP_REPO	:= https://storage.googleapis.com/loginapp-releases/charts
