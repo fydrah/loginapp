@@ -1,4 +1,4 @@
-FROM quay.io/fydrah/golang:1.17-alpine3.13 AS build
+FROM golang:1.21-alpine AS build
 ARG REPO=github.com/fydrah/loginapp
 
 RUN apk add --no-cache git build-base
